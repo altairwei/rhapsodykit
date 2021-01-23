@@ -19,4 +19,5 @@ Imports:
     shinydashboard,
     fs,
     purrr,
-    stringr
+    stringr,
+    readr

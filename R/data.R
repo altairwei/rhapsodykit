@@ -17,3 +17,17 @@ search_data <- function(root_folder) {
       )
     })
 }
+
+load_expression_data <- function(filename) {
+  df <- readr::read_tsv(filename, comment = "#",
+    col_types = readr::cols(
+      Cell_Index = readr::col_factor(),
+      Gene = readr::col_character(),
+      RSEC_Reads = readr::col_double(),
+      Raw_Molecules = readr::col_double(),
+      RSEC_Adjusted_Molecules = readr::col_double()
+    )
+  )
+
+  df
+}
