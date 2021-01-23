@@ -1,23 +1,29 @@
-generate_seurat_plots <- function(seurat_obj, output_folder) {
+#' Generate plots with the Seurat object
+#'
+#' @param object A seurat object.size.
+#' @param output_folder Folder to place plots.
+#'
+#' @export
+generate_seurat_plots <- function(object, output_folder) {
   # Quality Control
   tryCatch(
     expr = {
       p_qc_metrics <- Seurat::VlnPlot(
-        seurat_obj,
+        object,
         features = c("nFeature_RNA", "nCount_RNA"),
         ncol = 2
       )
       p_qc_metrics_image_width <- 6
 
-      if (!is.null(seurat_obj@meta.data[["percent.mt"]])) {
+      if (!is.null(object@meta.data[["percent.mt"]])) {
         p_qc_metrics <- p_qc_metrics + Seurat::VlnPlot(
-          seurat_obj, features = "percent.mt")
+          object, features = "percent.mt")
         p_qc_metrics_image_width <- p_qc_metrics_image_width + 3
       }
 
-      if (!is.null(seurat_obj@meta.data[["percent.cp"]])) {
+      if (!is.null(object@meta.data[["percent.cp"]])) {
         p_qc_metrics <- p_qc_metrics + Seurat::VlnPlot(
-          seurat_obj, features = "percent.cp")
+          object, features = "percent.cp")
         p_qc_metrics_image_width <- p_qc_metrics_image_width + 3
       }
       save_plot(
@@ -27,7 +33,7 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
       save_plot(
         file.path(output_folder, "QC_Count_Feature_Scatter.png"),
         Seurat::FeatureScatter(
-          seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+          object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
       )
     },
     error = function(e) message(toString(e))
@@ -38,9 +44,9 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
     expr = {
       # Identify the 10 most highly variable genes
       feature_selection_top10 <- head(
-        Seurat::VariableFeatures(seurat_obj), 10)
+        Seurat::VariableFeatures(object), 10)
       # plot variable features with and without labels
-      p_feature_selection_1 <- Seurat::VariableFeaturePlot(seurat_obj)
+      p_feature_selection_1 <- Seurat::VariableFeaturePlot(object)
       p_feature_selection_2 <- Seurat::LabelPoints(
         plot = p_feature_selection_1,
         points = feature_selection_top10, repel = TRUE)
@@ -57,14 +63,14 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
   # PCA Plots
   tryCatch(
     expr = {
-      npc <- length(seurat_obj[["pca"]]@stdev)
+      npc <- length(object[["pca"]]@stdev)
       p_pca_dim_load <- Seurat::VizDimLoadings(
-        seurat_obj, dims = 1:4, reduction = "pca")
+        object, dims = 1:4, reduction = "pca")
       save_plot(
         file.path(output_folder, "PCA_Dim_Loadings.png"),
         p_pca_dim_load
       )
-      p_pca_dim_scatter <- Seurat::DimPlot(seurat_obj, reduction = "pca")
+      p_pca_dim_scatter <- Seurat::DimPlot(object, reduction = "pca")
       save_plot(
         file.path(output_folder, "PCA_Scatter.png"),
         p_pca_dim_scatter
@@ -75,10 +81,10 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
 
   tryCatch(
     expr = {
-      npc <- length(seurat_obj[["pca"]]@stdev)
-      p_jackstraw <- Seurat::JackStrawPlot(seurat_obj, dims = 1:npc) +
+      npc <- length(object[["pca"]]@stdev)
+      p_jackstraw <- Seurat::JackStrawPlot(object, dims = 1:npc) +
         ggplot2::theme(legend.position = "none")
-      p_elbow <- Seurat::ElbowPlot(seurat_obj, ndims = npc)
+      p_elbow <- Seurat::ElbowPlot(object, ndims = npc)
       save_plot(
         file.path(output_folder, "PCA_Dimensionality.png"),
         p_jackstraw + p_elbow,
@@ -91,7 +97,7 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
   tryCatch(
     expr = {
       p_pca_dim_heatmap <- Seurat::DimHeatmap(
-        seurat_obj, dims = 1:9, cells = 500, balanced = TRUE)
+        object, dims = 1:9, cells = 500, balanced = TRUE)
       save_plot(
         file.path(options$output_folder, "PCA_Dim_Heatmap.png"),
         p_pca_dim_heatmap,
@@ -102,13 +108,13 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
   )
 
   # UMAP/tSNE Plots
-  if (Seurat::DefaultAssay(seurat_obj) == "integrated") {
+  if (Seurat::DefaultAssay(object) == "integrated") {
     tryCatch(
       expr = {
         p_umap_stim <- Seurat::DimPlot(
-          seurat_obj, reduction = "umap", group.by = "stim")
+          object, reduction = "umap", group.by = "stim")
         p_umap_cluster <- Seurat::DimPlot(
-          seurat_obj, reduction = "umap", label = TRUE)
+          object, reduction = "umap", label = TRUE)
         save_plot(
           file.path(output_folder, "UMAP_Scatter.png"),
           p_umap_stim + p_umap_cluster,
@@ -116,9 +122,9 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
         )
 
         p_tsne_stim <- Seurat::DimPlot(
-          seurat_obj, reduction = "tsne", group.by = "stim")
+          object, reduction = "tsne", group.by = "stim")
         p_tsne_cluster <- Seurat::DimPlot(
-          seurat_obj, reduction = "tsne", label = TRUE)
+          object, reduction = "tsne", label = TRUE)
         save_plot(
           file.path(output_folder, "TSNE_Scatter.png"),
           p_tsne_stim + p_tsne_cluster,
@@ -126,12 +132,12 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
         )
 
 
-        stim <- unique(unlist(seurat_obj[["stim"]]))
+        stim <- unique(unlist(object[["stim"]]))
         n_stim <-  length(stim)
         p_umap_split_stim <- Seurat::DimPlot(
-          seurat_obj, reduction = "umap", split.by = "stim")
+          object, reduction = "umap", split.by = "stim")
         p_tsne_split_stim <- Seurat::DimPlot(
-          seurat_obj, reduction = "tsne", split.by = "stim")
+          object, reduction = "tsne", split.by = "stim")
         save_plot(
           file.path(output_folder, "UMAP_Scatter_By_Stim.png"),
           p_umap_split_stim, width = 6 * n_stim
@@ -147,13 +153,13 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
     tryCatch(
       expr = {
         p_umap_dim <- Seurat::DimPlot(
-          seurat_obj, reduction = "umap", label = TRUE)
+          object, reduction = "umap", label = TRUE)
         save_plot(
           file.path(output_folder, "UMAP_Scatter.png"),
           p_umap_dim
         )
         p_tsne_dim <- Seurat::DimPlot(
-          seurat_obj, reduction = "tsne", label = TRUE)
+          object, reduction = "tsne", label = TRUE)
         save_plot(
           file.path(output_folder, "TSNE_Scatter.png"),
           p_tsne_dim
@@ -165,6 +171,12 @@ generate_seurat_plots <- function(seurat_obj, output_folder) {
 
 }
 
+#' Find gene markers for all cell identity classes
+#'
+#' @param object A Seurat object.
+#' @param output_folder Folder to place outputs.
+#'
+#' @export
 perform_find_all_markers <- function(object, output_folder) {
   markers_df <- Seurat::FindAllMarkers(
     object, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
@@ -178,8 +190,17 @@ perform_find_all_markers <- function(object, output_folder) {
     marker_heatmap, width = 14, height = 14)
 }
 
+#' Perform single sample Seurat analysis
+#'
+#' @param object A Seurat object
+#' @param mt_gene_file A file contains mitochondrial genes.
+#' @param cp_gene_file A file contains chloroplast genes.
+#' @param dimensionality Number of dimensions to use as input.
+#' @return A Seurat object
+#'
+#' @export
 single_sample_analysis <- function(
-  seurat_obj,
+  object,
   mt_gene_file = NULL,
   cp_gene_file = NULL,
   dimensionality = 20
@@ -187,13 +208,13 @@ single_sample_analysis <- function(
   # Quality Control
   if (!is.null(mt_gene_file)) {
     mt_gene_list <- readr::read_lines(mt_gene_file)
-    mt_gene_list <- intersect(rownames(seurat_obj[["RNA"]]), mt_gene_list)
+    mt_gene_list <- intersect(rownames(object[["RNA"]]), mt_gene_list)
     if (length(mt_gene_list) > 0) {
       message(sprintf(
         "Found %d mitochondrial genes in expression matrix.",
         length(mt_gene_list)))
-      seurat_obj[["percent.mt"]] <- Seurat::PercentageFeatureSet(
-        seurat_obj, features = mt_gene_list)
+      object[["percent.mt"]] <- Seurat::PercentageFeatureSet(
+        object, features = mt_gene_list)
     } else {
       message("No mitochondrial genes were found.")
     }
@@ -201,13 +222,13 @@ single_sample_analysis <- function(
 
   if (!is.null(cp_gene_file)) {
     cp_gene_list <- readr::read_lines(cp_gene_file)
-    cp_gene_list <- intersect(rownames(seurat_obj[["RNA"]]), cp_gene_list)
+    cp_gene_list <- intersect(rownames(object[["RNA"]]), cp_gene_list)
     if (length(cp_gene_list) > 0) {
       message(sprintf(
         "Found %d chloroplast genes in expression matrix.",
         length(mt_gene_list)))
-      seurat_obj[["percent.cp"]] <- Seurat::PercentageFeatureSet(
-        seurat_obj, features = cp_gene_list)
+      object[["percent.cp"]] <- Seurat::PercentageFeatureSet(
+        object, features = cp_gene_list)
     } else {
       message("No chloroplast genes were found.")
     }
@@ -216,7 +237,7 @@ single_sample_analysis <- function(
   # TODO: 增加 SCTransform 的选项！
   # Normalizing the data
   seurat_obj <- Seurat::NormalizeData(
-    seurat_obj, normalization.method = "LogNormalize", scale.factor = 10000)
+    object, normalization.method = "LogNormalize", scale.factor = 10000)
 
   # Feature selection
   seurat_obj <- Seurat::FindVariableFeatures(
@@ -252,6 +273,13 @@ single_sample_analysis <- function(
   seurat_obj
 }
 
+#' Perform Seurat integrated analysis for stimulated samples
+#'
+#' @param obj_list A list of Seurat objects.
+#' @param dimensionality Number of dimensions to use as input.
+#' @return A integrated Seurat object.
+#'
+#' @export
 integrated_sample_analysis <- function(obj_list, dimensionality = 20) {
   stopifnot(is.list(obj_list))
 
@@ -286,6 +314,12 @@ plot_clustree <- function(object) {
   clustree::clustree(obj@meta.data, prefix = "RNA_snn_res.")
 }
 
+#' Find conserved markers for all cell identity classes
+#'
+#' @param object A Seurat object.
+#' @return A data.frame containing conserved markers.
+#'
+#' @export
 find_all_conserved_markers <- function(object) {
   Seurat::DefaultAssay(object) <- "RNA"
   idents_all <- sort(unique(Seurat::Idents(object)))
@@ -310,6 +344,13 @@ find_all_conserved_markers <- function(object) {
   do.call(dplyr::bind_rows, df_list)
 }
 
+#' Generate average expression of different sample
+#'  for all cell identity classes
+#'
+#' @param object A Seurat object.
+#' @return A data.frame containing average expression.
+#'
+#' @export
 find_all_avg_expr_genes <- function(object) {
   idents_all <- sort(unique(Seurat::Idents(object)))
   df_list <- lapply(idents_all, function(i) {
@@ -329,8 +370,9 @@ find_all_avg_expr_genes <- function(object) {
 #'  for each cell cluster.
 #'
 #' @param object Seurat object.
-#'
 #' @return A data frame.
+#'
+#' @export
 find_all_diff_expr_genes <- function(object) {
   idents_all <- sort(unique(Seurat::Idents(object)))
   stim <- unique(unlist(object[["stim"]]))
@@ -376,8 +418,9 @@ find_all_diff_expr_genes <- function(object) {
 #'
 #' @param avg_genes A data frame produced by \code{find_all_avg_expr_genes}
 #' @param diff_genes A data frame produced by \code{find_all_diff_expr_genes}
-#'
 #' @return A named list of ggplot2 object.
+#'
+#' @export
 plot_avg_expr_genes <- function(avg_genes, diff_genes) {
   diff_genes_by_comp <- split(diff_genes, diff_genes[["comparison"]])
   results <- lapply(diff_genes_by_comp, function(diff_genes_comp) {
@@ -474,6 +517,13 @@ plot_avg_expr_genes <- function(avg_genes, diff_genes) {
   results
 }
 
+#' Perform differentially expressed genes analysis.
+#'
+#' @param object A Seurat object
+#' @param output_folder Folder to place outputs
+#' @param draw_plot Draw plots or not.
+#'
+#' @export
 perform_diff_gene <- function(object, output_folder, draw_plot = TRUE) {
   tryCatch(
     expr = {

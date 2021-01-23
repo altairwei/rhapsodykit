@@ -32,6 +32,11 @@ load_expression_data <- function(filename) {
   df
 }
 
+#' Wrapper for \code{ggsave} with more messages.
+#'
+#' @inheritParams ggplot2::ggsave
+#'
+#' @export
 save_plot <- function(filename, plot, width = 7, height = 7, ...) {
   message(sprintf("Saving %d x %d in image: %s", width, height, filename))
   ggplot2::ggsave(filename, plot, width = width, height = height, ...)
@@ -98,6 +103,15 @@ read_mtx <- function(base_dir = ".") {
   m
 }
 
+#' Read expression data from results folder of Rhapsody WTA pipeline.
+#'
+#' @param base_dir The path of results folder.
+#' @param use_mtx Specify whether to use the sparse matrix constructed
+#'    by the \code{Matrix} package.
+#' @return A matrix whose column names represent cell index,
+#'    row names represent genes.
+#'
+#' @export
 read_rhapsody_wta <- function(base_dir, use_mtx = FALSE) {
   expr_matrix <- NULL
 
