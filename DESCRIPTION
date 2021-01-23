@@ -1,5 +1,5 @@
 Package: rhapsodykit
-Title: What the Package Does (One Line, Title Case)
+Title: A Set of Tools for BD Rhapsody WTA Downstream Analysis
 Version: 0.0.0.9000
 Authors@R: 
     person(given = "Altair",
@@ -7,8 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "altair_wei@outlook.com")
 Description: What the package does (one paragraph).
-License: `use_mit_license()`, `use_gpl3_license()` or friends to
-    pick a license
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
@@ -20,4 +19,13 @@ Imports:
     fs,
     purrr,
     stringr,
-    readr
+    readr,
+    Seurat,
+    Matrix,
+    ggplot2,
+    cowplot,
+    patchwork,
+    metap,
+    multtest,
+    limma,
+    sctransform
