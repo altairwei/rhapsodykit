@@ -16,29 +16,28 @@ make_psuedo_bulk <- function(
   names(data_folders) <- basename(data_folders)
   mat_list <- lapply(data_folders, function(base_dir) {
     expr_matrix <- read_rhapsody_wta(base_dir, TRUE)
-    expr_matrix
-  })
-
-  .make_psuedo_bulk(mat_list, normalization, method)
-}
-
-.make_psuedo_bulk <- function(
-  cell_gene_matrix_list,
-  normalization = "LogNormalize",
-  method = "avg") {
-  obj_list <- lapply(cell_gene_matrix_list, function(expr_matrix) {
     seurat_obj <- Seurat::CreateSeuratObject(
       counts = expr_matrix, project = basename(base_dir))
     seurat_obj$stim <- basename(base_dir)
+    # Normalization
     if (normalization == "SCTransform") {
       seurat_obj <- Seurat::SCTransform(
         seurat_obj, do.scale = FALSE)
     } else {
-      # Perform LogNormalize
       seurat_obj <- Seurat::NormalizeData(
         seurat_obj, normalization.method = normalization)
     }
+    # Return normalized data
+    Seurat::GetAssayData(seurat_obj)
   })
+
+  .make_psuedo_bulk(mat_list, method)
+}
+
+.make_psuedo_bulk <- function(
+  cell_gene_matrix_list,
+  method = "avg") {
+  stopifnot(!is.null(names(cell_gene_matrix_list)))
 
   method_to_apply <- switch(method,
     avg = Matrix::rowMeans,
@@ -47,14 +46,13 @@ make_psuedo_bulk <- function(
   )
 
   # A list of named vector which contains expression data
-  expr_list <- lapply(obj_list, function(obj) {
-    data <- Seurat::GetAssayData(obj)
+  expr_list <- lapply(cell_gene_matrix_list, function(mat) {
     # Gene average expression. (row = genes, col = cells)
     # `expm1` is used in Seurat::AverageExpression
-    data <- log1p(method_to_apply(expm1(data)))
-    stopifnot(data >= 0L)
+    expr <- log1p(method_to_apply(expm1(mat)))
+    stopifnot(expr >= 0L)
 
-    data
+    expr
   })
 
   # Union of genes from all sample
