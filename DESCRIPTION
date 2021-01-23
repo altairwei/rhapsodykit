@@ -29,3 +29,5 @@ Imports:
     multtest,
     limma,
     sctransform
+Suggests: 
+    testthat

@@ -14,8 +14,19 @@ make_psuedo_bulk <- function(
   method = "avg") {
   stopifnot(is.character(data_folders))
   names(data_folders) <- basename(data_folders)
-  obj_list <- lapply(data_folders, function(base_dir) {
+  mat_list <- lapply(data_folders, function(base_dir) {
     expr_matrix <- read_rhapsody_wta(base_dir, TRUE)
+    expr_matrix
+  })
+
+  .make_psuedo_bulk(mat_list, normalization, method)
+}
+
+.make_psuedo_bulk <- function(
+  cell_gene_matrix_list,
+  normalization = "LogNormalize",
+  method = "avg") {
+  obj_list <- lapply(cell_gene_matrix_list, function(expr_matrix) {
     seurat_obj <- Seurat::CreateSeuratObject(
       counts = expr_matrix, project = basename(base_dir))
     seurat_obj$stim <- basename(base_dir)
