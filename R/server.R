@@ -3,8 +3,11 @@
 #' @param input,output,session Arguments passed by shiny
 main_server <- function(input, output, session) {
   data_folder <- shiny::getShinyOption("data_folder")
+
+  manifest <- load_manifest(data_folder)
+
   rv <- shiny::reactiveValues(
-    library_list = search_data(data_folder)
+    library_list = search_data(manifest[[KEY_LIB_RESULTS]], data_folder)
   )
 
   cache <- list(

@@ -28,6 +28,8 @@ Imports:
     metap,
     multtest,
     limma,
-    sctransform
+    sctransform,
+    rjson,
+    vroom
 Suggests: 
     testthat
