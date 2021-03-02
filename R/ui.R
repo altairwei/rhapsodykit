@@ -17,6 +17,7 @@ create_main_ui <- function() {
       )
     ),
     shinydashboard::dashboardBody(
+      waiter::use_waiter(),
       shinydashboard::tabItems(
         shinydashboard::tabItem(
           tabName = "metrics_summary",

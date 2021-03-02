@@ -27,21 +27,20 @@ expression_projection_page_ui <- function(id) {
   )
 }
 
-expression_projection_page <- function(input, output, session, rv, cache) {
-  shiny::observe({
-    shiny::req(rv$library_list)
-    shiny::updateSelectInput(
-      session,
-      "select_sample",
-      choices = basename(names(rv$library_list)),
-    )
-  })
+expression_projection_page <- function(
+  input, output, session, library_list, cache) {
+  shiny::updateSelectInput(
+    session,
+    "select_sample",
+    choices = basename(names(library_list)),
+  )
 
   gene_queries <- shiny::eventReactive(input$submit, {
     gene_list <- strsplit(input$gene_list, "\n")[[1]]
     gene_list
   })
 
+  # Dynamically render plotOutput that user need.
   output$display <- shiny::renderUI({
     ns <- session$ns
     gene_list <- gene_queries()
@@ -49,10 +48,14 @@ expression_projection_page <- function(input, output, session, rv, cache) {
     lapply(gene_list, function(gene) {
       shinydashboard::box(width = NULL, title = gene,
         shiny::column(6,
-          shiny::plotOutput(outputId = ns(paste0("scatter-", gene)))
+          shinycssloaders::withSpinner(
+            shiny::plotOutput(outputId = ns(paste0("scatter-", gene)))
+          )
         ),
         shiny::column(6,
-          shiny::plotOutput(outputId = ns(paste0("violin-", gene)))
+          shinycssloaders::withSpinner(
+            shiny::plotOutput(outputId = ns(paste0("violin-", gene)))
+          )
         )
       )
     })
@@ -60,6 +63,7 @@ expression_projection_page <- function(input, output, session, rv, cache) {
 
   last_queries <- NULL
   shiny::observe({
+    # Remove last expired output observer.
     if (!is.null(last_queries)) {
       for (old_id in last_queries) {
         output[[paste0("scatter-", old_id)]] <- NULL
@@ -70,19 +74,16 @@ expression_projection_page <- function(input, output, session, rv, cache) {
     plot_output_id_list <- gene_queries()
     last_queries <<- plot_output_id_list
 
-    for (id in plot_output_id_list) {
-      data <- data.frame(
-        x = rnorm(nchar(id), 1, 2),
-        y = rnorm(nchar(id), 1, 2)
-      )
-      output[[paste0("scatter-", id)]] <- shiny::renderPlot({
-        ggplot2::ggplot(data, ggplot2::aes(x, y)) +
-          ggplot2::geom_point()
+    library <- shiny::isolate(input$select_sample)
+    obj <- cache[[library]]$Seurat_Object()
+
+    invisible(lapply(plot_output_id_list, function(gene_id) {
+      output[[paste0("scatter-", gene_id)]] <- shiny::renderPlot({
+        Seurat::FeaturePlot(obj, features = gene_id)
       })
-      output[[paste0("violin-", id)]] <- shiny::renderPlot({
-        ggplot2::ggplot(data, ggplot2::aes(y, x)) +
-          ggplot2::geom_point()
+      output[[paste0("violin-", gene_id)]] <- shiny::renderPlot({
+        Seurat::VlnPlot(obj, features = gene_id)
       })
-    }
+    }))
   })
 }

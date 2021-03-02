@@ -30,6 +30,8 @@ Imports:
     limma,
     sctransform,
     rjson,
-    vroom
+    vroom,
+    waiter,
+    shinycssloaders
 Suggests: 
     testthat

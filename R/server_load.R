@@ -6,6 +6,10 @@ validate_manifest <- function(x) {
   }
 }
 
+#' Load project manifest from root folder.
+#'
+#' @param base_folder Project results root folder.
+#' @return A list converted from json file.
 load_manifest <- function(base_folder) {
   if (!dir.exists(base_folder)) {
     stop("Directory provided does not exist: ", base_folder)
