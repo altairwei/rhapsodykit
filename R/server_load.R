@@ -34,15 +34,16 @@ load_manifest <- function(base_folder) {
 search_data <- function(raw_result_folders, base_folder) {
   raw_result_folders <- file.path(base_folder, raw_result_folders)
   names(raw_result_folders) <- raw_result_folders
-  libs <- raw_result_folders %>% # Library
+  libs <- raw_result_folders %>%
     lapply(function(lib_dir) {
-      files <- fs::dir_ls(lib_dir, type = "file")
+      seurat_dir <- file.path(lib_dir, "SeuratAnalysis")
       list(
-        Expression_Data = pluck_endswith(files, "_Expression_Data.st"),
-        Metrics_Summary = pluck_endswith(files, "_Metrics_Summary.csv"),
-        RSEC_MolsPerCell = pluck_endswith(files, "_RSEC_MolsPerCell.csv"),
-        RSEC_ReadsPerCell = pluck_endswith(files, "_RSEC_ReadsPerCell.csv"),
-        UMI_Adjusted_Stats = pluck_endswith(files, "_UMI_Adjusted_Stats.csv")
+        Expression_Data = find_file(lib_dir, "*_Expression_Data.st"),
+        Metrics_Summary = find_file(lib_dir, "*_Metrics_Summary.csv"),
+        RSEC_MolsPerCell = find_file(lib_dir, "*_RSEC_MolsPerCell.csv"),
+        RSEC_ReadsPerCell = find_file(lib_dir, "*_RSEC_ReadsPerCell.csv"),
+        UMI_Adjusted_Stats = find_file(lib_dir, "*_UMI_Adjusted_Stats.csv"),
+        Seurat_Object = find_file(seurat_dir, "Seurat_Object.rds")
       )
     })
 

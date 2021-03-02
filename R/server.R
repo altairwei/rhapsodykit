@@ -12,7 +12,7 @@ main_server <- function(input, output, session) {
 
   cache <- list(
     Expression_Data = shiny::reactive({
-      data <- NULL
+      # Note: function args are evaluated in caller env
       shiny::withProgress(message = "Loading Expression Data", value = 0, {
         n <- length(rv$library_list)
         data <- purrr::imap(rv$library_list, function(lib, name) {
@@ -24,7 +24,8 @@ main_server <- function(input, output, session) {
     })
   )
 
+  #shiny::callModule(
+  #    metrics_summary_page, "metrics_summary_page", rv, cache)
   shiny::callModule(
-      metrics_summary_page, "metrics_summary_page", rv, cache)
-
+      expression_projection_page, "expression_projection_page", rv, cache)
 }
