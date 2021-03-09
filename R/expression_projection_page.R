@@ -8,6 +8,12 @@ expression_projection_page_ui <- function(id) {
           label = "Select Sample:",
           choices = c("Please select a sample..." = "None")
         ),
+        shiny::radioButtons(
+          inputId = ns("reduction"),
+          label = "Reduction",
+          choices = c("tsne", "umap", "pca"),
+          inline = TRUE
+        ),
         shiny::textAreaInput(
           inputId = ns("gene_list"),
           label = "Genes to Query:",
@@ -75,11 +81,12 @@ expression_projection_page <- function(
     last_queries <<- plot_output_id_list
 
     library <- shiny::isolate(input$select_sample)
+    reduction <- shiny::isolate(input$reduction)
     obj <- cache[[library]]$Seurat_Object()
 
     invisible(lapply(plot_output_id_list, function(gene_id) {
       output[[paste0("scatter-", gene_id)]] <- shiny::renderPlot({
-        Seurat::FeaturePlot(obj, features = gene_id)
+        Seurat::FeaturePlot(obj, features = gene_id, reduction = reduction)
       })
       output[[paste0("violin-", gene_id)]] <- shiny::renderPlot({
         Seurat::VlnPlot(obj, features = gene_id)
