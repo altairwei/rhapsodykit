@@ -37,4 +37,8 @@ main_server <- function(input, output, session) {
   shiny::callModule(
       expression_projection_page, "expression_projection_page",
       library_list, cache)
+  shiny::callModule(
+      ensembl_homologs_page, "ensembl_homologs_page")
+
+  waiter::waiter_hide()
 }

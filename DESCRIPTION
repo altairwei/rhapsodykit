@@ -32,6 +32,8 @@ Imports:
     rjson,
     vroom,
     waiter,
-    shinycssloaders
+    shinycssloaders,
+    biomaRt,
+    DT
 Suggests: 
     testthat
