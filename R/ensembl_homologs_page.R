@@ -152,7 +152,7 @@ ensembl_homologs_page <- function(input, output, session) {
 
         DT::datatable(
           all_homologs,
-          selection = list(target = "column"),
+          rownames = FALSE,
           extensions = "Buttons",
           options = list(
             pageLength = 50,
@@ -166,7 +166,7 @@ ensembl_homologs_page <- function(input, output, session) {
                 title = NULL,
                 header = FALSE,
                 exportOptions = list(
-                    columns = 1
+                    columns = 0
                 )
               ),
               list(
