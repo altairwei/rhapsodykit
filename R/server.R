@@ -9,9 +9,15 @@ main_server <- function(input, output, session) {
   rv <- shiny::reactiveValues()
 
   # A list of results files for each library.
-  library_list <- search_data(manifest[[KEY_LIB_RESULTS]], data_folder)
+  library_list <- search_data(
+    manifest[[KEY_LIB_RESULTS]], data_folder)
   names(library_list) <- basename(names(library_list))
 
+  integrated_list <- search_integrated_data(
+    manifest[[KEY_LIB_INTEGRATED]], data_folder)
+  names(integrated_list) <- basename(names(integrated_list))
+
+  library_list <- c(library_list, integrated_list)
   # A list of R object cache for each library
   cache <- lapply(library_list, function(results_list) {
     purrr::imap(results_list, function(filename, key) {

@@ -54,6 +54,19 @@ search_data <- function(raw_result_folders, base_folder) {
   libs
 }
 
+search_integrated_data <- function(raw_result_folders, base_folder) {
+  raw_result_folders <- file.path(base_folder, raw_result_folders)
+  names(raw_result_folders) <- raw_result_folders
+  libs <- raw_result_folders %>%
+    lapply(function(lib_dir) {
+      list(
+        Seurat_Object = find_file(lib_dir, "Seurat_Object_Combined.rds")
+      )
+    })
+
+  libs
+}
+
 load_expression_data <- function(filename) {
   df <- vroom::vroom(filename, delim = "\t", comment = "#",
     col_types = readr::cols(

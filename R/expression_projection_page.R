@@ -59,6 +59,7 @@ expression_projection_page <- function(
     reduction <- input$reduction
     obj <- cache[[library]]$Seurat_Object()
 
+    Seurat::DefaultAssay(obj) <- "RNA"
     Seurat::DimPlot(obj, reduction = reduction)
   })
 
