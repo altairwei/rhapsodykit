@@ -123,6 +123,8 @@ ensembl_homologs_page <- function(input, output, session) {
           host = shiny::isolate(input$host)
         )
 
+        available_attrs <- biomaRt::listAttributes(dataset_conn)$name
+
         attrs_to_retrive <- c(
           "_homolog_ensembl_gene",
           "_homolog_orthology_type",
@@ -141,11 +143,19 @@ ensembl_homologs_page <- function(input, output, session) {
         )
 
         all_homologs <- biomaRt::getBM(
-          attributes = attrs_to_retrive,
+          attributes = intersect(attrs_to_retrive, available_attrs),
           filters = "ensembl_gene_id",
           values = shiny::isolate(input$query_gene),
           mart = dataset_conn
         )
+
+        if (nrow(all_homologs) > 0) {
+          all_homologs[setdiff(attrs_to_retrive, available_attrs)] <- "NA"
+        } else {
+          all_homologs[setdiff(attrs_to_retrive, available_attrs)] <- logical(0)
+        }
+
+        all_homologs <- all_homologs[attrs_to_retrive]
 
         all_homologs <- all_homologs %>%
           dplyr::rename_with(~ names(attrs_to_retrive))

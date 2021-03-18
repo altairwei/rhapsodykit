@@ -6,7 +6,7 @@ expression_projection_page_ui <- function(id) {
         shiny::selectInput(
           inputId = ns("select_sample"),
           label = "Select Sample:",
-          choices = c("Please select a sample..." = "None")
+          choices = c("Please select a sample..." = "")
         ),
         shiny::radioButtons(
           inputId = ns("reduction"),
@@ -24,6 +24,11 @@ expression_projection_page_ui <- function(id) {
         shiny::actionButton(
           inputId = ns("submit"),
           label = "Submit"
+        )
+      ),
+      shinycssloaders::withSpinner(
+        shiny::plotOutput(
+          outputId = ns("dimplot")
         )
       )
     ),
@@ -44,6 +49,17 @@ expression_projection_page <- function(
   gene_queries <- shiny::eventReactive(input$submit, {
     gene_list <- strsplit(input$gene_list, "\n")[[1]]
     gene_list
+  })
+
+  output$dimplot <- shiny::renderPlot({
+    shiny::req(input$submit)
+    shiny::req(input$select_sample)
+
+    library <- input$select_sample
+    reduction <- input$reduction
+    obj <- cache[[library]]$Seurat_Object()
+
+    Seurat::DimPlot(obj, reduction = reduction)
   })
 
   # Dynamically render plotOutput that user need.
