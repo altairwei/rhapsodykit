@@ -550,6 +550,12 @@ perform_diff_gene <- function(object, output_folder, draw_plot = TRUE) {
   )
 }
 
+#' Assign stimulus conditions.
+#'
+#' @param object A Seurat object
+#' @param stim_map A named character vecter, such as `c("old" = "new")`.
+#'
+#' @export
 assign_stim <- function(object, stim_map) {
   if (is.null(names(stim_map)) || !is.character(stim_map))
     stop("stim_map must be a named character vecter.")
