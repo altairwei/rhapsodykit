@@ -549,3 +549,22 @@ perform_diff_gene <- function(object, output_folder, draw_plot = TRUE) {
     error = function(e) message(toString(e))
   )
 }
+
+assign_stim <- function(object, stim_map) {
+  if (is.null(names(stim_map)) || !is.character(stim_map))
+    stop("stim_map must be a named character vecter.")
+
+  stim_to_change <- names(stim_map)
+  old_stims <- object$stim
+  new_stims <- lapply(old_stims, function(stim) {
+    if (stim %in% stim_to_change) {
+      stim_map[[stim]]
+    } else {
+      stim
+    }
+  })
+
+  object$stim <- unlist(new_stims)
+
+  object
+}
