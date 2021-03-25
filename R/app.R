@@ -10,9 +10,11 @@ run_app <- function(data_folder = ".", host = "127.0.0.1", port = NULL) {
     host = host,
     port = port
   )
-  shiny::shinyApp(
+  app <- shiny::shinyApp(
     ui = create_main_ui(),
     server = main_server,
     options = opts
   )
+
+  shiny::runApp(app)
 }
