@@ -1,4 +1,4 @@
-test_that("test assign_stim", {
+test_that("test reassign_stim", {
   object <- list(
     stim = c(
       rep("stim-A-1", 5),
@@ -13,7 +13,7 @@ test_that("test assign_stim", {
     )
   )
 
-  new_obj <- assign_stim(object, c(
+  new_obj <- reassign_stim(object, c(
     "stim-A-1" = "stim-A",
     "stim-A-2" = "stim-A",
     "stim-A-3" = "stim-A",
@@ -32,7 +32,7 @@ test_that("test assign_stim", {
     )
   )
 
-  new_obj2 <- assign_stim(object, c(
+  new_obj2 <- reassign_stim(object, c(
     "stim-A-1" = "stim-A",
     "stim-A-2" = "stim-A",
     "stim-A-3" = "stim-A"
@@ -49,7 +49,7 @@ test_that("test assign_stim", {
     )
   )
 
-  new_obj3 <- assign_stim(object, c(
+  new_obj3 <- reassign_stim(object, c(
     "stim-A-1" = "stim-A",
     "stim-B-2" = "stim-B",
     "stim-C-3" = "stim-C"
