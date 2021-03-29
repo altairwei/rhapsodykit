@@ -2,7 +2,7 @@ expression_projection_page_ui <- function(id) {
   ns <- shiny::NS(id)
   shiny::fluidRow(
     shiny::column(width = 3,
-      shinydashboard::box(width = NULL,
+      shinydashboard::box(width = NULL, title = "Expression Projection",
         shiny::selectInput(
           inputId = ns("select_sample"),
           label = "Select Sample:",

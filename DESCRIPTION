@@ -34,7 +34,11 @@ Imports:
     waiter,
     shinycssloaders,
     biomaRt,
-    DT
+    DT,
+    tidyr,
+    tidyselect,
+    ComplexHeatmap,
+    InteractiveComplexHeatmap
 Suggests: 
     testthat
 biocViews: SingleCellWorkflow

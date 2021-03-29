@@ -74,3 +74,18 @@ make_psuedo_bulk <- function(
 
   df
 }
+
+aggregate_by_ident <- function(object, features, stat_fun = mean) {
+  Seurat::DefaultAssay(object) <- "RNA"
+  data <- Seurat::FetchData(
+    object, vars = c("ident", features), slot = "data")
+
+  data <- tidyr::gather(
+    data, tidyselect::any_of(features), key = "gene", value = "expr")
+
+  aggregated <- data %>%
+    dplyr::group_by(gene, ident) %>%
+    dplyr::summarise(value = stat_fun(expr))
+
+  aggregated
+}

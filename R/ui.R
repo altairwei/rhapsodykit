@@ -12,6 +12,8 @@ create_main_ui <- function() {
         shinydashboard::menuItem("Standard Analysis",
           shinydashboard::menuSubItem(
             "Expression Projection", tabName = "expression_projection"),
+          shinydashboard::menuSubItem(
+            "Subpopulation Heatmap", tabName = "subpopulation_heatmap"),
           tabName = "standard_analysis"
         ),
         shinydashboard::menuItem("Utilities",
@@ -33,6 +35,10 @@ create_main_ui <- function() {
         shinydashboard::tabItem(
           tabName = "expression_projection",
           expression_projection_page_ui("expression_projection_page")
+        ),
+        shinydashboard::tabItem(
+          tabName = "subpopulation_heatmap",
+          subpopulation_heatmap_page_ui("subpopulation_heatmap_page")
         ),
         shinydashboard::tabItem(
           tabName = "ensembl_homologs",
