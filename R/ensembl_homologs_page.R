@@ -176,16 +176,25 @@ ensembl_homologs_page <- function(input, output, session) {
                 title = NULL,
                 header = FALSE,
                 exportOptions = list(
-                    columns = 0
+                  columns = 0,
+                  modifier = list(page = "all")
                 )
               ),
               list(
                 extend = "copyHtml5",
                 text = "Copy Table",
-                title = NULL
+                title = NULL,
+                exportOptions = list(
+                  modifier = list(page = "all")
+                )
               ),
-              "csv",
-              "print"
+              list(
+                extend = "csv",
+                title = NULL,
+                exportOptions = list(
+                  modifier = list(page = "all")
+                )
+              )
             )
           )
         )

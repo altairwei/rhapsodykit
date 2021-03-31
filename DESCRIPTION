@@ -37,7 +37,7 @@ Imports:
     DT,
     tidyr,
     tidyselect,
-    ComplexHeatmap,
+    ComplexHeatmap (>= 2.5.3),
     InteractiveComplexHeatmap
 Suggests: 
     testthat
