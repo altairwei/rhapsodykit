@@ -63,3 +63,8 @@ get_pos_from_click <- function(click, ratio = 1) {
   pos1[2] <- pos1[2] / ratio
   pos1
 }
+
+plot_placeholder <- function(text) {
+  grid::grid.text(
+    text, 0.5, 0.5, gp = grid::gpar(fontsize = 20))
+}

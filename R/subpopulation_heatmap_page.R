@@ -41,6 +41,9 @@ subpopulation_heatmap_page_ui <- function(id) {
         width = NULL,
         shinycssloaders::withSpinner(
           shiny::plotOutput(outputId = ns("projection"))
+        ),
+        shinycssloaders::withSpinner(
+          shiny::plotOutput(outputId = ns("vlnplot"))
         )
       )
     ),
@@ -50,9 +53,20 @@ subpopulation_heatmap_page_ui <- function(id) {
     shiny::column(width = 3,
       shinydashboard::box(
         width = NULL,
+        title = "Sub-heatmap",
+        shinycssloaders::withSpinner(
+          shiny::plotOutput(
+            outputId = ns("sub_heatmap"),
+            click = ns("sub_heatmap_click"))
+        )
+      ),
+      shinydashboard::box(
+        width = NULL,
         title = "Selected Data",
-        DT::dataTableOutput(
-          outputId = ns("selected_info")
+        shinycssloaders::withSpinner(
+          DT::dataTableOutput(
+            outputId = ns("selected_info")
+          )
         )
       )
     ),
@@ -112,8 +126,57 @@ subpopulation_heatmap_page <-  function(
   ht_obj_cache <- shiny::reactiveVal(NULL)
   ht_pos_cache <- shiny::reactiveVal(NULL)
 
-  clicked_mat <- shiny::reactive({
+  sub_ht_obj_cache <- shiny::reactiveVal(NULL)
+  sub_ht_pos_cache <- shiny::reactiveVal(NULL)
 
+  brushed_indexes <- shiny::reactive({
+    ht <- ht_obj_cache()
+    ht_pos <- ht_pos_cache()
+
+    if (shiny::isTruthy(input$heatmap_brush) &&
+          !is.null(ht) && !is.null(ht_pos)) {
+      lt <- get_pos_from_brush(input$heatmap_brush)
+      pos1 <- lt[[1]]
+      pos2 <- lt[[2]]
+
+      selection <- InteractiveComplexHeatmap::selectArea(
+        ht,
+        mark = FALSE,
+        pos1 = pos1,
+        pos2 = pos2,
+        verbose = FALSE,
+        ht_pos = ht_pos,
+        include_annotation = TRUE,
+        calibrate = FALSE
+      )
+
+      row_index <- unique(unlist(selection$row_index))
+      col_index <- unique(unlist(selection$column_index))
+
+      list(
+        row_index = row_index,
+        col_index = col_index,
+        heatmap = selection$heatmap
+      )
+
+    } else {
+      NULL
+    }
+  })
+
+  brushed_mat <- shiny::eventReactive(input$heatmap_brush, {
+    index_list <- brushed_indexes()
+
+    shiny::req(index_list)
+
+    mat <- dataset()
+
+    mat[index_list$row_index, index_list$col_index, drop = FALSE]
+  })
+
+  clicked_gene <- shiny::reactiveVal(NULL)
+
+  shiny::observe({
     ht <- ht_obj_cache()
     ht_pos <- ht_pos_cache()
 
@@ -133,7 +196,11 @@ subpopulation_heatmap_page <-  function(
 
       mat <- dataset()
 
-      mat[row_index, col_index, drop = FALSE]
+      sub <- mat[row_index, col_index, drop = FALSE]
+
+      clicked_gene(rownames(sub))
+
+      sub
 
     } else {
       NULL
@@ -141,31 +208,34 @@ subpopulation_heatmap_page <-  function(
 
   })
 
-  brushed_mat <- shiny::eventReactive(input$heatmap_brush, {
-    shiny::req(ht_obj_cache(), ht_pos_cache())
-    ht <- ht_obj_cache()
+  shiny::observe({
+    ht <- sub_ht_obj_cache()
+    ht_pos <- sub_ht_pos_cache()
 
-    lt <- get_pos_from_brush(input$heatmap_brush)
-    pos1 <- lt[[1]]
-    pos2 <- lt[[2]]
+    if (shiny::isTruthy(input$sub_heatmap_click) &&
+      shiny::isTruthy(ht) && shiny::isTruthy(ht_pos)) {
+      pos <- get_pos_from_click(input$sub_heatmap_click)
+      selection <- InteractiveComplexHeatmap::selectPosition(
+        ht, pos,
+        mark = FALSE,
+        ht_pos = ht_pos,
+        verbose = FALSE,
+        calibrate = FALSE
+      )
 
-    selection <- InteractiveComplexHeatmap::selectArea(
-      ht,
-      mark = FALSE,
-      pos1 = pos1,
-      pos2 = pos2,
-      verbose = FALSE,
-      ht_pos = ht_pos_cache(),
-      include_annotation = TRUE,
-      calibrate = FALSE
-    )
+      row_index <- unique(unlist(selection$row_index))
+      col_index <- unique(unlist(selection$column_index))
 
-    row_index <- unique(unlist(selection$row_index))
-    col_index <- unique(unlist(selection$column_index))
+      mat <- brushed_mat()
 
-    mat <- dataset()
+      sub <- mat[row_index, col_index, drop = FALSE]
 
-    mat[row_index, col_index, drop = FALSE]
+      clicked_gene(rownames(sub))
+
+      sub
+    } else {
+      NULL
+    }
   })
 
   ####################
@@ -198,11 +268,17 @@ subpopulation_heatmap_page <-  function(
 
   })
 
-  output$heatmap <- shiny::renderPlot({
+  ht_raw_obj <- shiny::reactive({
     gene_list <- gene_queries()
 
     ht <- plot_subpopulation_heatmap(
       dataset(), length(gene_list) < MAX_GENE_NUM)
+
+    ht
+  })
+
+  output$heatmap <- shiny::renderPlot({
+    ht <- ht_raw_obj()
     ht <- ComplexHeatmap::draw(ht)
     ht_obj_cache(ht)
 
@@ -213,21 +289,90 @@ subpopulation_heatmap_page <-  function(
     ht
   })
 
+  output$sub_heatmap <- shiny::renderPlot({
+    index_list <- brushed_indexes()
+    ht_list <- ht_obj_cache()
+
+    if (shiny::isTruthy(index_list) && !is.null(ht_list)) {
+      subm <- brushed_mat()
+
+      message("Plot brushed heatmap...")
+      start_time <- Sys.time()
+
+      ri <- index_list$row_index
+      ci <- index_list$col_index
+
+      ht_current_full <- ht_list@ht_list[[index_list$heatmap[[1]]]]
+
+      row_labels <- ht_current_full@row_names_param$labels
+      if (!is.null(row_labels)) {
+        row_labels <- row_labels[ri]
+      }
+      column_labels <- ht_current_full@column_names_param$labels
+      if (!is.null(column_labels)) {
+        column_labels <- column_labels[ci]
+      }
+
+      ht_selected <- ComplexHeatmap::Heatmap(
+        subm,
+        rect_gp = ht_current_full@matrix_param$gp,
+        col = ht_current_full@matrix_color_mapping,
+        show_heatmap_legend = FALSE,
+        cluster_rows = FALSE,
+        cluster_columns = FALSE,
+        row_title = NULL,
+        column_title = NULL,
+        border = ht_current_full@matrix_param$border,
+        row_labels = row_labels,
+        column_labels = column_labels,
+        show_row_names = length(ri) < 50,
+        row_names_side = ht_current_full@row_names_param$side,
+        show_column_names = TRUE,
+        column_names_side = ht_current_full@column_names_param$side
+      )
+
+      ht_selected <- ComplexHeatmap::draw(ht_selected)
+      sub_ht_obj_cache(ht_selected)
+
+      ht_selected_pos <- InteractiveComplexHeatmap::htPositionsOnDevice(
+        ht_selected, include_annotation = TRUE, calibrate = FALSE)
+      sub_ht_pos_cache(ht_selected_pos)
+
+      end_time <- Sys.time()
+      elapsed <- end_time - start_time
+      message("Finished plot brushed heatmap in ", elapsed, " secs")
+
+      ht_selected
+    } else {
+      plot_placeholder("Select heatmap\n to see sub-heatmap.")
+    }
+  })
+
   output$projection <- shiny::renderPlot({
-    mat <- clicked_mat()
-
-    if (shiny::isTruthy(mat)) {
-      selected_gene <- rownames(mat)
-
+    selected_gene <- clicked_gene()
+    if (!is.null(selected_gene)) {
       library <- shiny::isolate(input$select_sample)
       reduction <- input$reduction
       obj <- cache[[library]]$Seurat_Object()
       Seurat::DefaultAssay(obj) <- "RNA"
       Seurat::FeaturePlot(obj, features = selected_gene, reduction = reduction)
     } else {
-      grid::grid.text(
-        "Click heatmap to \nselect a gene to projection.",
-        0.5, 0.5, gp = grid::gpar(fontsize = 20))
+      plot_placeholder(
+        "Click heatmap to \nselect a gene to projection.")
+    }
+  })
+
+  output$vlnplot <- shiny::renderPlot({
+    selected_gene <- clicked_gene()
+    if (!is.null(selected_gene)) {
+      library <- shiny::isolate(input$select_sample)
+      reduction <- input$reduction
+      obj <- cache[[library]]$Seurat_Object()
+      Seurat::DefaultAssay(obj) <- "RNA"
+      Seurat::VlnPlot(obj, features = selected_gene)
+    } else {
+      plot_placeholder(
+        "Click heatmap to \nselect a gene to projection.")
     }
   })
 
