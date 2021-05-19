@@ -111,40 +111,40 @@ generate_seurat_plots <- function(object, output_folder) {
   if (Seurat::DefaultAssay(object) == "integrated") {
     tryCatch(
       expr = {
-        p_umap_stim <- Seurat::DimPlot(
-          object, reduction = "umap", group.by = "stim")
+        p_umap_sample <- Seurat::DimPlot(
+          object, reduction = "umap", group.by = "sample")
         p_umap_cluster <- Seurat::DimPlot(
           object, reduction = "umap", label = TRUE)
         save_plot(
           file.path(output_folder, "UMAP_Scatter.png"),
-          p_umap_stim + p_umap_cluster,
+          p_umap_sample + p_umap_cluster,
           width = 12
         )
 
-        p_tsne_stim <- Seurat::DimPlot(
-          object, reduction = "tsne", group.by = "stim")
+        p_tsne_sample <- Seurat::DimPlot(
+          object, reduction = "tsne", group.by = "sample")
         p_tsne_cluster <- Seurat::DimPlot(
           object, reduction = "tsne", label = TRUE)
         save_plot(
           file.path(output_folder, "TSNE_Scatter.png"),
-          p_tsne_stim + p_tsne_cluster,
+          p_tsne_sample + p_tsne_cluster,
           width = 12
         )
 
 
-        stim <- unique(unlist(object[["stim"]]))
-        n_stim <-  length(stim)
-        p_umap_split_stim <- Seurat::DimPlot(
-          object, reduction = "umap", split.by = "stim")
-        p_tsne_split_stim <- Seurat::DimPlot(
-          object, reduction = "tsne", split.by = "stim")
+        sample <- unique(unlist(object[["sample"]]))
+        n_sample <-  length(sample)
+        p_umap_split_sample <- Seurat::DimPlot(
+          object, reduction = "umap", split.by = "sample")
+        p_tsne_split_sample <- Seurat::DimPlot(
+          object, reduction = "tsne", split.by = "sample")
         save_plot(
-          file.path(output_folder, "UMAP_Scatter_By_Stim.png"),
-          p_umap_split_stim, width = 6 * n_stim
+          file.path(output_folder, "UMAP_Scatter_By_Sample.png"),
+          p_umap_split_sample, width = 6 * n_sample
         )
         save_plot(
-          file.path(output_folder, "TSNE_Scatter_By_Stim.png"),
-          p_tsne_split_stim, width = 6 * n_stim
+          file.path(output_folder, "TSNE_Scatter_By_Sample.png"),
+          p_tsne_split_sample, width = 6 * n_sample
         )
       },
       error = function(e) message(toString(e))
@@ -326,7 +326,7 @@ find_all_conserved_markers <- function(object) {
   df_list <- lapply(idents_all, function(i) {
     df <- tryCatch(
       Seurat::FindConservedMarkers(
-        object, ident.1 = i, grouping.var = "stim"),
+        object, ident.1 = i, grouping.var = "sample"),
       error = function(e) {
         message(toString(e))
         NULL
@@ -355,8 +355,8 @@ find_all_avg_expr_genes <- function(object) {
   idents_all <- sort(unique(Seurat::Idents(object)))
   df_list <- lapply(idents_all, function(i) {
     ident_cells <- subset(object, idents = i)
-    # Specify identity of cells based on value of meta.data[["stim"]]
-    Seurat::Idents(ident_cells) <- "stim"
+    # Specify identity of cells based on value of meta.data[["sample"]]
+    Seurat::Idents(ident_cells) <- "sample"
     # AverageExpression will be applied to every `Assay` object.
     avg_ident_cells <- log1p(Seurat::AverageExpression(ident_cells)$RNA)
     avg_ident_cells[["cluster"]] <- i
@@ -375,9 +375,9 @@ find_all_avg_expr_genes <- function(object) {
 #' @export
 find_all_diff_expr_genes <- function(object) {
   idents_all <- sort(unique(Seurat::Idents(object)))
-  stim <- unique(unlist(object[["stim"]]))
+  sample <- unique(unlist(object[["sample"]]))
   # Produce an permutation of all conditions
-  all_comb <- as.data.frame(combn(stim, 2), stringsAsFactors = FALSE)
+  all_comb <- as.data.frame(combn(sample, 2), stringsAsFactors = FALSE)
   names(all_comb) <- NULL
   # Find diff genes on each comparision
   comp_list <- lapply(all_comb, function(couple) {
@@ -385,8 +385,8 @@ find_all_diff_expr_genes <- function(object) {
     # Perform on each cell cluster
     diff_list <- lapply(idents_all, function(id) {
       ident_cells <- subset(object, idents = id)
-      # Specify identity of cells based on value of meta.data[["stim"]]
-      Seurat::Idents(ident_cells) <- "stim"
+      # Specify identity of cells based on value of meta.data[["sample"]]
+      Seurat::Idents(ident_cells) <- "sample"
       message("Calculating cluster ", id)
       # We assume that the control group is the first one
       #   and the stimulated group is the second one.
@@ -550,27 +550,17 @@ perform_diff_gene <- function(object, output_folder, draw_plot = TRUE) {
   )
 }
 
-#' Reassign stimulus conditions.
+#' Reassign sample name.
 #'
 #' @param object A Seurat object
-#' @param stim_map A named character vecter, such as `c("old" = "new")`.
+#' @param sample_map A named character vecter, such as `c("old" = "new")`.
 #'
 #' @export
-reassign_stim <- function(object, stim_map) {
-  if (is.null(names(stim_map)) || !is.character(stim_map))
-    stop("stim_map must be a named character vecter.")
+reassign_sample <- function(object, sample_map) {
+  if (is.null(names(sample_map)) || !is.character(sample_map))
+    stop("sample_map must be a named character vecter.")
 
-  stim_to_change <- names(stim_map)
-  old_stims <- object$stim
-  new_stims <- lapply(old_stims, function(stim) {
-    if (stim %in% stim_to_change) {
-      stim_map[[stim]]
-    } else {
-      stim
-    }
-  })
-
-  object$stim <- unlist(new_stims)
+  object$sample <- key_mapping(object$sample, sample_map)
 
   object
 }

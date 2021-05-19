@@ -18,7 +18,7 @@ make_psuedo_bulk <- function(
     expr_matrix <- read_rhapsody_wta(base_dir, TRUE)
     seurat_obj <- Seurat::CreateSeuratObject(
       counts = expr_matrix, project = basename(base_dir))
-    seurat_obj$stim <- basename(base_dir)
+    seurat_obj$sample <- basename(base_dir)
     # Normalization
     if (normalization == "SCTransform") {
       seurat_obj <- Seurat::SCTransform(
@@ -90,35 +90,22 @@ aggregate_by_ident <- function(object, features, stat_fun = mean) {
   aggregated
 }
 
-prepare_muscat_sce <- function(seurat_object, group_mapping) {
+prepare_muscat_sce <- function(seurat_object) {
   stopifnot(
     inherits(seurat_object, "Seurat"),
     Seurat::DefaultAssay(seurat_object) == "integrated",
-    !is.null(seurat_object@meta.data$stim)
+    !is.null(seurat_object@meta.data$sample),
+    !is.null(seurat_object@meta.data$group)
   )
-
-  stopifnot(is.character(group_mapping), !is.null(names(group_mapping)))
 
   # Prepare SingleCellExperiment object
   sce <- Seurat::as.SingleCellExperiment(seurat_object, assay = "RNA")
-
-  # Assign group
-  sample_to_group <- names(group_mapping)
-  samples <- sce$stim
-  groups <- lapply(samples, function(sample) {
-    if (sample %in% sample_to_group) {
-      group_mapping[[sample]]
-    } else {
-      sample
-    }
-  })
-  sce$group <- unlist(groups)
 
   # muscat data preparation
   sce <- muscat::prepSCE(sce,
     kid = "ident", # subpopulation assignments
     gid = "group", # group IDs (ctrl/stim)
-    sid = "stim", # sample IDs (ctrl/stim.1234)
+    sid = "sample", # sample IDs (ctrl/stim.1234)
     drop = TRUE
   )
 

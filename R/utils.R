@@ -19,3 +19,24 @@ find_file <- function(base_folder, glob) {
 
   filename
 }
+
+#' Mapping key according to a given dict.
+#'
+#' @param x A character vector to convert.
+#' @param dict A named character defined mapping rule.
+#'
+#' @return A character vector.
+key_mapping <- function(x, dict) {
+  stopifnot(is.character(dict), !is.null(names(dict)))
+
+  available_keys <- names(dict)
+  ret <- lapply(x, function(key) {
+    if (key %in% available_keys) {
+      dict[[key]]
+    } else {
+      key
+    }
+  })
+
+  unlist(ret)
+}
