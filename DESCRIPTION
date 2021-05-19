@@ -38,7 +38,12 @@ Imports:
     tidyr,
     tidyselect,
     ComplexHeatmap (>= 2.5.3),
-    InteractiveComplexHeatmap
+    InteractiveComplexHeatmap,
+    SingleCellExperiment,
+    muscat,
+    scater,
+    future,
+    parallelly
 Suggests: 
     testthat
 biocViews: SingleCellWorkflow

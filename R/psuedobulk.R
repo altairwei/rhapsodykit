@@ -89,3 +89,103 @@ aggregate_by_ident <- function(object, features, stat_fun = mean) {
 
   aggregated
 }
+
+prepare_muscat_sce <- function(seurat_object, group_mapping) {
+  stopifnot(
+    inherits(seurat_object, "Seurat"),
+    Seurat::DefaultAssay(seurat_object) == "integrated",
+    !is.null(seurat_object@meta.data$stim)
+  )
+
+  stopifnot(is.character(group_mapping), !is.null(names(group_mapping)))
+
+  # Prepare SingleCellExperiment object
+  sce <- Seurat::as.SingleCellExperiment(seurat_object, assay = "RNA")
+
+  # Assign group
+  sample_to_group <- names(group_mapping)
+  samples <- sce$stim
+  groups <- lapply(samples, function(sample) {
+    if (sample %in% sample_to_group) {
+      group_mapping[[sample]]
+    } else {
+      sample
+    }
+  })
+  sce$group <- unlist(groups)
+
+  # muscat data preparation
+  sce <- muscat::prepSCE(sce,
+    kid = "ident", # subpopulation assignments
+    gid = "group", # group IDs (ctrl/stim)
+    sid = "stim", # sample IDs (ctrl/stim.1234)
+    drop = TRUE
+  )
+
+  sce
+}
+
+calculate_psuedo_bulk <- function(sce,
+  type = c("counts", "logcounts", "cpm", "vstresiduals")) {
+  stopifnot(
+    inherits(sce, "SingleCellExperiment"),
+    all(c("cluster_id", "sample_id", "group_id") %in% names(sce@colData))
+  )
+
+  # Simple Quality Control
+
+  # remove undetected genes
+  sce <- sce[Matrix::rowSums(SingleCellExperiment::counts(sce) > 0) > 0, ]
+
+  # Normalization
+  type <- match.arg(type)
+  SummarizedExperiment::assay(sce, type) <- switch(type,
+    counts = SingleCellExperiment::counts(sce),
+    logcounts = {
+      sce %>%
+        scater::computeLibraryFactors() %>%
+        scater::normalizeCounts()
+    },
+    cpm = {
+      sce %>%
+        SingleCellExperiment::counts() %>%
+        scater::calculateCPM()
+    },
+    vstresiduals = {
+      future::plan(
+        strategy = "multicore",
+        workers = parallelly::availableCores()
+      )
+      # `min_cells = 1` corresponds to QC step "remove undetected genes"
+      sce %>%
+        SingleCellExperiment::counts() %>%
+        sctransform::vst(min_cells = 1, verbosity = TRUE) %>%
+        .$y
+    }
+  )
+
+  fun <- switch(type,
+    counts = "sum",
+    logcounts = "mean",
+    cpm = "sum",
+    vstresiduals = "mean"
+  )
+
+  scale <- switch(type, cpm = TRUE, FALSE)
+
+  pb <- muscat::aggregateData(sce, type, fun = fun, scale = scale)
+
+  pb
+}
+
+make_integrated_psuedo_bulk <- function(
+  seurat_object,
+  group_mapping,
+  type = c("counts", "logcounts", "cpm", "vstresiduals")
+) {
+  type <- match.arg(type)
+  sce <- prepare_muscat_sce(seurat_object, group_mapping)
+  pb <- calculate_psuedo_bulk(sce, type)
+
+  lapply(pb@assays@data, function(m) as.data.frame(m))
+}
