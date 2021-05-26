@@ -9,6 +9,14 @@ plot_subpopulation_heatmap <- function(
   )
 }
 
+#' Plot heatmap across samples.
+#'
+#' @param x Data object to plot.
+#' @param genes Genes to be queried.
+#' @param samples Samples to be queried.
+#' @param clusters Cell subpopulation to be queried.
+#' @param groups Group infromation.
+#' @inheritParams calculate_psuedo_bulk
 #' @export
 heatmap_cross_sample <- function(
   x, genes, samples = NULL, clusters = NULL, groups = NULL,
@@ -17,8 +25,9 @@ heatmap_cross_sample <- function(
   UseMethod("heatmap_cross_sample")
 }
 
-#' @export
+#' @describeIn heatmap_cross_sample Plot heatmap for Seurat object.
 #' @method heatmap_cross_sample Seurat
+#' @export
 heatmap_cross_sample.Seurat <- function(
   x, genes, samples = NULL, clusters = NULL, groups = NULL,
   type = c("counts", "logcounts", "cpm", "vstresiduals"),
@@ -35,8 +44,9 @@ heatmap_cross_sample.Seurat <- function(
   )
 }
 
-#' @export
+#' @describeIn heatmap_cross_sample Plot heatmap for SingleCellExperiment object.
 #' @method heatmap_cross_sample SingleCellExperiment
+#' @export
 heatmap_cross_sample.SingleCellExperiment <- function(
   x, genes, samples = NULL, clusters = NULL, groups = NULL,
   type = c("counts", "logcounts", "cpm", "vstresiduals"),
@@ -54,8 +64,9 @@ heatmap_cross_sample.SingleCellExperiment <- function(
   )
 }
 
-#' @export
+#' @describeIn heatmap_cross_sample Plot heatmap for a list of matrices.
 #' @method heatmap_cross_sample list
+#' @export
 heatmap_cross_sample.list <- function(
   x, genes, samples = NULL, clusters = NULL, groups = NULL,
   type = c("counts", "logcounts", "cpm", "vstresiduals"),
@@ -127,8 +138,9 @@ heatmap_cross_sample.list <- function(
   )
 }
 
-#' @export
+#' @describeIn heatmap_cross_sample Plot heatmap for array.
 #' @method heatmap_cross_sample array
+#' @export
 heatmap_cross_sample.array <- function(
   x, genes, samples = NULL, clusters = NULL, groups = NULL,
   type = c("counts", "logcounts", "cpm", "vstresiduals"),

@@ -90,6 +90,13 @@ aggregate_by_ident <- function(object, features, stat_fun = mean) {
   aggregated
 }
 
+#' Prepare SingleCellExperiment object for muscat package.
+#'
+#' @param seurat_object Seurat object after integrated analysis.
+#' The \code{sample} and \code{group} infromation must exist in 
+#' \code{seurat_object@meta.data} slot.
+#' @return A SingleCellExperiment object.
+#' @export
 prepare_muscat_sce <- function(seurat_object) {
   stopifnot(
     inherits(seurat_object, "Seurat"),
@@ -112,6 +119,18 @@ prepare_muscat_sce <- function(seurat_object) {
   sce
 }
 
+#' Calculate pseudo-bulk RNA-Seq data from scRNA-Seq.
+#'
+#' @param sce A SingleCellExperiment object. The following
+#' cell metadata (\code{colData}) columns have to be provided:
+#' \describe{
+#'   \item{\code{sample_id}}{unique sample identifiers}
+#'   \item{\code{cluster_id}}{subpopulation (cluster) assignments}
+#'   \item{\code{group_id}}{experimental group/condition}
+#' }
+#' @param type Value type of pseudo-bulk data.
+#' @return A SingleCellExperiment object.
+#' @export
 calculate_psuedo_bulk <- function(sce,
   type = c("counts", "logcounts", "cpm", "vstresiduals")) {
   stopifnot(
@@ -165,6 +184,13 @@ calculate_psuedo_bulk <- function(sce,
   pb
 }
 
+#' Make pseudo-bulk RNA-Seq data from a Seurat object.
+#'
+#' @inheritParams prepare_muscat_sce
+#' @inheritParams calculate_psuedo_bulk
+#' @return An array with three dimensions. The three dimensions represent
+#'  genes (rownames), samples (colnames), and cell subpopulation, respectively.
+#' @export
 make_integrated_psuedo_bulk <- function(
   seurat_object,
   type = c("counts", "logcounts", "cpm", "vstresiduals")
