@@ -1,5 +1,5 @@
 plot_subpopulation_heatmap <- function(
-                                       aggregated, show_gene_name = TRUE) {
+  aggregated, show_gene_name = TRUE) {
   stopifnot(is.matrix(aggregated))
 
   ComplexHeatmap::Heatmap(aggregated,
@@ -7,30 +7,184 @@ plot_subpopulation_heatmap <- function(
     column_names_side = "top",
     show_row_names = show_gene_name
   )
+}
 
-  # p <- ggplot2::ggplot(aggregated, ggplot2::aes(ident, gene, fill = value)) +
-  #   ggplot2::geom_tile() +
-  #   ggplot2::scale_x_discrete(position = "top") +
-  #   ggplot2::scale_fill_gradient(
-  #     low = "white", high = "red") +
-  #   ggplot2::theme_minimal() +
-  #   ggplot2::theme(
-  #     axis.text.x = ggplot2::element_text(
-  #       angle = 45, vjust = 0, size = 12, hjust = 0),
-  #     axis.text.y = ggplot2::element_text(size = 12)) +
-  #   ggplot2::theme(
-  #     axis.title.x = ggplot2::element_blank(),
-  #     axis.title.y = ggplot2::element_blank(),
-  #     panel.grid.major = ggplot2::element_blank(),
-  #     panel.border = ggplot2::element_blank(),
-  #     panel.background = ggplot2::element_blank(),
-  #     axis.ticks = ggplot2::element_blank(),
-  #     legend.position = "top")
+#' @export
+heatmap_cross_sample <- function(
+  x, genes, samples = NULL, clusters = NULL, groups = NULL,
+  type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  ...) {
+  UseMethod("heatmap_cross_sample")
+}
 
-  # if (isFALSE(show_gene_name))
-  #   p <- p + ggplot2::theme(axis.text.y = ggplot2::element_blank())
+#' @export
+#' @method heatmap_cross_sample Seurat
+heatmap_cross_sample.Seurat <- function(
+  x, genes, samples = NULL, clusters = NULL, groups = NULL,
+  type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  ...) {
+  type <- match.arg(type)
+  sce <- prepare_muscat_sce(x)
+  heatmap_cross_sample(
+    sce,
+    genes = genes,
+    samples = samples,
+    clusters = clusters,
+    type = type,
+    ...
+  )
+}
 
-  # p
+#' @export
+#' @method heatmap_cross_sample SingleCellExperiment
+heatmap_cross_sample.SingleCellExperiment <- function(
+  x, genes, samples = NULL, clusters = NULL, groups = NULL,
+  type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  ...) {
+  type <- match.arg(type)
+  sce <- calculate_psuedo_bulk(x, type)
+  pb_list <- abind::abind(as.list(sce@assays@data), along = 3)
+  heatmap_cross_sample(
+    pb_list,
+    genes = genes,
+    samples = samples,
+    clusters = clusters,
+    type = type,
+    ...
+  )
+}
+
+#' @export
+#' @method heatmap_cross_sample list
+heatmap_cross_sample.list <- function(
+  x, genes, samples = NULL, clusters = NULL, groups = NULL,
+  type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  ...) {
+  type <- match.arg(type)
+  stopifnot(
+    !is.null(names(x)),
+    all(sapply(x, function(m) is.matrix(m))),
+    !is.null(genes)
+  )
+
+  # Validate subset keys
+
+  if (!is.null(clusters)) {
+    clusters_valid <- clusters %in% names(x)
+    if (!all(clusters_valid)) {
+      warning("Not all queried cluster exist.")
+      clusters <- clusters[clusters_valid]
+    }
+  } else {
+    clusters <- names(x)
+  }
+
+  gene_names_list <- lapply(x, function(m) rownames(m))
+  genes_all_identical <- all(sapply(
+    gene_names_list, FUN = identical, gene_names_list[[1]]))
+  if (!genes_all_identical)
+    stop("Matrix must have same rownames.")
+
+  sample_names_list <- lapply(x, function(m) colnames(m))
+  sample_all_identical <- all(sapply(
+    sample_names_list, FUN = identical, sample_names_list[[1]]))
+  if (!sample_all_identical)
+    stop("Matrix must have same colnames.")
+
+  if (!is.null(samples)) {
+    samples_valid <- samples %in% colnames(x[[1]])
+    if (!all(samples_valid)) {
+      warning("Not all queried samples exist.")
+      samples <- samples[samples_valid]
+      if (length(samples) == 0)
+        stop("No samples available.")
+    }
+  } else {
+    samples <- colnames(x[[1]])
+  }
+
+  genes_valid <- genes %in% gene_names_list[[1]]
+  if (!all(genes_valid)) {
+    warning("Not all queried genes exist.")
+    genes <- genes[genes_valid]
+    if (length(genes) == 0)
+      stop("No genes available.")
+  }
+
+  # Subset raw data
+  x <- x[clusters]
+  x <- lapply(x, function(m) m[genes, samples, drop = FALSE])
+
+  clu_fct <- factor(rep(names(x), each = length(genes)))
+
+  mat_combined <- do.call(rbind, x)
+
+  ComplexHeatmap::Heatmap(
+    mat_combined,
+    name = type,
+    row_split = clu_fct,
+    ...
+  )
+}
+
+#' @export
+#' @method heatmap_cross_sample array
+heatmap_cross_sample.array <- function(
+  x, genes, samples = NULL, clusters = NULL, groups = NULL,
+  type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  ...) {
+  type <- match.arg(type)
+  stopifnot(
+    length(dim(x)) == 3,
+    length(dimnames(x)) == 3
+  )
+
+  if (any(sapply(dimnames(x), is.null)))
+    stop("All dims must have dimnames.")
+
+  if (!is.null(clusters)) {
+    clusters_valid <- clusters %in% dimnames(x)[[3L]]
+    if (!all(clusters_valid)) {
+      warning("Not all queried cluster exist.")
+      clusters <- clusters[clusters_valid]
+    }
+  } else {
+    clusters <- dimnames(x)[[3L]]
+  }
+
+  if (!is.null(samples)) {
+    samples_valid <- samples %in% colnames(x)
+    if (!all(samples_valid)) {
+      warning("Not all queried samples exist.")
+      samples <- samples[samples_valid]
+      if (length(samples) == 0)
+        stop("No samples available.")
+    }
+  } else {
+    samples <- colnames(x)
+  }
+
+  genes_valid <- genes %in% rownames(x)
+  if (!all(genes_valid)) {
+    warning("Not all queried genes exist.")
+    genes <- genes[genes_valid]
+    if (length(genes) == 0)
+      stop("No genes available.")
+  }
+
+  # Subset raw data
+  x <- x[genes, samples, clusters, drop = FALSE]
+  clu_fct <- factor(rep(dimnames(x)[[3L]], each = length(genes)))
+
+  x_list <- purrr::array_branch(x, margin = 3)
+  mat_combined <- do.call(rbind, x_list)
+
+  ComplexHeatmap::Heatmap(
+    mat_combined,
+    name = type,
+    row_split = clu_fct,
+    ...
+  )
 }
 
 # Copy from InteractiveComplexHeatmap

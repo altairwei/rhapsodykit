@@ -3,5 +3,6 @@
 .Rproj.user
 
 .vscode/
+tmp/
 
 Rplots*

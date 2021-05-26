@@ -167,12 +167,11 @@ calculate_psuedo_bulk <- function(sce,
 
 make_integrated_psuedo_bulk <- function(
   seurat_object,
-  group_mapping,
   type = c("counts", "logcounts", "cpm", "vstresiduals")
 ) {
   type <- match.arg(type)
-  sce <- prepare_muscat_sce(seurat_object, group_mapping)
+  sce <- prepare_muscat_sce(seurat_object)
   pb <- calculate_psuedo_bulk(sce, type)
 
-  lapply(pb@assays@data, function(m) as.data.frame(m))
+  abind::abind(as.list(pb@assays@data), along = 3)
 }

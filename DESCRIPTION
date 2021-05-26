@@ -43,7 +43,8 @@ Imports:
     muscat,
     scater,
     future,
-    parallelly
+    parallelly,
+    abind
 Suggests: 
     testthat
 biocViews: SingleCellWorkflow

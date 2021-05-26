@@ -2,7 +2,7 @@
 % Please edit documentation in R/seurat.R
 \name{reassign_sample}
 \alias{reassign_sample}
-\title{Reassign stimulus conditions.}
+\title{Reassign sample name.}
 \usage{
 reassign_sample(object, sample_map)
 }
@@ -12,5 +12,5 @@ reassign_sample(object, sample_map)
 \item{sample_map}{A named character vecter, such as \code{c("old" = "new")}.}
 }
 \description{
-Reassign stimulus conditions.
+Reassign sample name.
 }
