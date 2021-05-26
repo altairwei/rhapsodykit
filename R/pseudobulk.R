@@ -1,14 +1,14 @@
-#' Make psuedo-bulk RNA-Seq from scRNA-Seq.
+#' Make pseudo-bulk RNA-Seq from scRNA-Seq.
 #'
 #' @param data_folders A vector of Rhapsody WTA results folder path.
 #' @param normalization Normalization methods to apply. Available values
 #'    are same as \code{Seurat::NormalizeData} plus "SCTransform".
-#' @param method Psuedo-bulk method to apply. Available values
+#' @param method Pseudo-bulk method to apply. Available values
 #'    are \code{avg} and \code{sum} .
-#' @return A data.frame containing psuedo-bulk RNA-Seq expression data.
+#' @return A data.frame containing pseudo-bulk RNA-Seq expression data.
 #'
 #' @export
-make_psuedo_bulk <- function(
+make_pseudo_bulk <- function(
   data_folders,
   normalization = "LogNormalize",
   method = "avg") {
@@ -31,10 +31,10 @@ make_psuedo_bulk <- function(
     Seurat::GetAssayData(seurat_obj)
   })
 
-  .make_psuedo_bulk(mat_list, method)
+  .make_pseudo_bulk(mat_list, method)
 }
 
-.make_psuedo_bulk <- function(
+.make_pseudo_bulk <- function(
   cell_gene_matrix_list,
   method = "avg") {
   stopifnot(!is.null(names(cell_gene_matrix_list)))
@@ -131,7 +131,7 @@ prepare_muscat_sce <- function(seurat_object) {
 #' @param type Value type of pseudo-bulk data.
 #' @return A SingleCellExperiment object.
 #' @export
-calculate_psuedo_bulk <- function(sce,
+calculate_pseudo_bulk <- function(sce,
   type = c("counts", "logcounts", "cpm", "vstresiduals")) {
   stopifnot(
     inherits(sce, "SingleCellExperiment"),
@@ -187,17 +187,17 @@ calculate_psuedo_bulk <- function(sce,
 #' Make pseudo-bulk RNA-Seq data from a Seurat object.
 #'
 #' @inheritParams prepare_muscat_sce
-#' @inheritParams calculate_psuedo_bulk
+#' @inheritParams calculate_pseudo_bulk
 #' @return An array with three dimensions. The three dimensions represent
 #'  genes (rownames), samples (colnames), and cell subpopulation, respectively.
 #' @export
-make_integrated_psuedo_bulk <- function(
+make_integrated_pseudo_bulk <- function(
   seurat_object,
   type = c("counts", "logcounts", "cpm", "vstresiduals")
 ) {
   type <- match.arg(type)
   sce <- prepare_muscat_sce(seurat_object)
-  pb <- calculate_psuedo_bulk(sce, type)
+  pb <- calculate_pseudo_bulk(sce, type)
 
   abind::abind(as.list(pb@assays@data), along = 3)
 }

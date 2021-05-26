@@ -1,4 +1,4 @@
-test_that("test make_psuedo_bulk", {
+test_that("test make_pseudo_bulk", {
   mat_list <- list(
     sample1 = Matrix::Matrix(
       c(
@@ -44,7 +44,7 @@ test_that("test make_psuedo_bulk", {
     )
   )
 
-  df <- .make_psuedo_bulk(mat_list, "avg")
+  df <- .make_pseudo_bulk(mat_list, "avg")
   expect_equal(
     names(df),
     c("sample1", "sample2", "sample3"))

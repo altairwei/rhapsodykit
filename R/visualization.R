@@ -16,7 +16,7 @@ plot_subpopulation_heatmap <- function(
 #' @param samples Samples to be queried.
 #' @param clusters Cell subpopulation to be queried.
 #' @param groups Group infromation.
-#' @inheritParams calculate_psuedo_bulk
+#' @inheritParams calculate_pseudo_bulk
 #' @export
 heatmap_cross_sample <- function(
   x, genes, samples = NULL, clusters = NULL, groups = NULL,
@@ -52,7 +52,7 @@ heatmap_cross_sample.SingleCellExperiment <- function(
   type = c("counts", "logcounts", "cpm", "vstresiduals"),
   ...) {
   type <- match.arg(type)
-  sce <- calculate_psuedo_bulk(x, type)
+  sce <- calculate_pseudo_bulk(x, type)
   pb_list <- abind::abind(as.list(sce@assays@data), along = 3)
   heatmap_cross_sample(
     pb_list,
