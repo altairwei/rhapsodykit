@@ -95,9 +95,12 @@ aggregate_by_ident <- function(object, features, stat_fun = mean) {
 #' @param seurat_object Seurat object after integrated analysis.
 #' The \code{sample} and \code{group} infromation must exist in 
 #' \code{seurat_object@meta.data} slot.
+#' @param sample_make_names Apply \code{make.names} on \code{sample}.
+#' @param group_make_namnes Apply \code{make.names} on \code{group}
 #' @return A SingleCellExperiment object.
 #' @export
-prepare_muscat_sce <- function(seurat_object) {
+prepare_muscat_sce <- function(
+  seurat_object, sample_make_names = FALSE, group_make_namnes = FALSE) {
   stopifnot(
     inherits(seurat_object, "Seurat"),
     Seurat::DefaultAssay(seurat_object) == "integrated",
@@ -107,6 +110,11 @@ prepare_muscat_sce <- function(seurat_object) {
 
   # Prepare SingleCellExperiment object
   sce <- Seurat::as.SingleCellExperiment(seurat_object, assay = "RNA")
+
+  if (sample_make_names)
+    sce$sample <- make.names(sce$sample)
+  if (group_make_namnes)
+    sce$group <- make.names(sce$group)
 
   # muscat data preparation
   sce <- muscat::prepSCE(sce,

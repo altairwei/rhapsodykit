@@ -4,12 +4,20 @@
 \alias{prepare_muscat_sce}
 \title{Prepare SingleCellExperiment object for muscat package.}
 \usage{
-prepare_muscat_sce(seurat_object)
+prepare_muscat_sce(
+  seurat_object,
+  sample_make_names = FALSE,
+  group_make_namnes = FALSE
+)
 }
 \arguments{
 \item{seurat_object}{Seurat object after integrated analysis.
 The \code{sample} and \code{group} infromation must exist in
 \code{seurat_object@meta.data} slot.}
+
+\item{sample_make_names}{Apply \code{make.names} on \code{sample}.}
+
+\item{group_make_namnes}{Apply \code{make.names} on \code{group}}
 }
 \value{
 A SingleCellExperiment object.
