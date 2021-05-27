@@ -113,7 +113,7 @@ prepare_muscat_sce <- function(
 
   if (sample_make_names)
     sce$sample <- make.names(sce$sample)
-  if (group_make_namnes)
+  if (group_make_names)
     sce$group <- make.names(sce$group)
 
   # muscat data preparation
