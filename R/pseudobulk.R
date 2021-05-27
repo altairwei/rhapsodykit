@@ -96,11 +96,11 @@ aggregate_by_ident <- function(object, features, stat_fun = mean) {
 #' The \code{sample} and \code{group} infromation must exist in 
 #' \code{seurat_object@meta.data} slot.
 #' @param sample_make_names Apply \code{make.names} on \code{sample}.
-#' @param group_make_namnes Apply \code{make.names} on \code{group}
+#' @param group_make_names Apply \code{make.names} on \code{group}
 #' @return A SingleCellExperiment object.
 #' @export
 prepare_muscat_sce <- function(
-  seurat_object, sample_make_names = FALSE, group_make_namnes = FALSE) {
+  seurat_object, sample_make_names = FALSE, group_make_names = FALSE) {
   stopifnot(
     inherits(seurat_object, "Seurat"),
     Seurat::DefaultAssay(seurat_object) == "integrated",
