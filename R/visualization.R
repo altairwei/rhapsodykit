@@ -248,6 +248,7 @@ plot_placeholder <- function(text) {
 #' @param pval_cut Where to add cutoff-line for P value.
 #' @param y_var Which column should be used as \code{y}.
 #' @param title Plot title.
+#' @export
 volcano_diff_state <- function(
   x,
   logfc_cut = 1,
