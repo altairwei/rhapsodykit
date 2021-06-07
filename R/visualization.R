@@ -234,3 +234,57 @@ plot_placeholder <- function(text) {
   grid::grid.text(
     text, 0.5, 0.5, gp = grid::gpar(fontsize = 20))
 }
+
+#' Volcano plot for differential state analysis.
+#'
+#' @param x A data.frame contains following column:
+#' \describe{
+#'   \item{\code{gene}}{gene names}
+#'   \item{\code{logFC}}{log2 fold change}
+#'   \item{\code{p_adj.loc}}{adjusted p-value}
+#'   \item{\code{cluster_id}{data source}
+#' }
+#' @param logfc_cut Where to add cutoff-line for logFC.
+#' @param pval_cut Where to add cutoff-line for P value.
+#' @param y_var Which column should be used as \code{y}.
+#' @param title Plot title.
+volcano_diff_state <- function(
+  x,
+  logfc_cut = 1,
+  pval_cut = 0.05,
+  y_var = "p_adj.loc",
+  title = NULL
+) {
+  # setting for color
+  x$color_transparent <- ifelse(
+    (x[[y_var]] < pval_cut & x$logFC > logfc_cut), "red",
+    ifelse((x[[y_var]] < pval_cut & x$logFC < -logfc_cut), "blue", "grey")
+  )
+  # setting for size
+  size <- ifelse((x[[y_var]] < pval_cut & abs(x$logFC) > logfc_cut), 1, 0.5)
+
+  x$y <- -log10(x[[y_var]])
+
+  # Construct the plot object
+  p1 <- ggplot2::ggplot(x, ggplot2::aes(logFC, y)) +
+    ggplot2::geom_point(
+      size = size, colour = x$color_transparent) +
+    ggplot2::labs(
+      x = bquote(~Log[2]~"(fold change)"),
+      y = bquote(~-Log[10]~italic("P-adjusted")), title = "") +
+    ggplot2::geom_vline(xintercept = c(-logfc_cut, logfc_cut), color = "grey40",
+              linetype = "longdash", lwd = 0.5) +
+    ggplot2::geom_hline(yintercept = -log10(pval_cut), color = "grey40",
+              linetype = "longdash", lwd = 0.5) +
+
+    ggplot2::theme_bw(base_size = 12) +
+    ggplot2::theme(panel.grid = ggplot2::element_blank()) +
+    ggplot2::facet_wrap(~cluster_id)
+
+  if (!is.null(title)) {
+    p1 <- p1 + ggplot2::ggtitle(title) +
+      ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5))
+  }
+
+  p1
+}

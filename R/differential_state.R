@@ -111,3 +111,11 @@ diff_state_summary <- function(tbl_list, sce) {
 
   data.frame("#DS" = n_de, "%DS" = p_de, check.names = FALSE)
 }
+
+#' Format differential state testing results into an easily filterable table
+#'
+#' @inheritParams diff_state_filter
+#' @export
+diff_state_format <- function(tbl_list) {
+  dplyr::bind_rows(tbl_list)
+}
