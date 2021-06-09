@@ -35,6 +35,40 @@ pseudobulk_diff_state <- function(
   res
 }
 
+#' Find group-specific genes.
+#'
+#' @param target_group Which group to find marker genes.
+#' @inheritParams pseudobulk_diff_state
+#' @export
+find_group_marker_genes <- function(
+  sce, pb, target_group,
+  method = c("edgeR", "DESeq2", "limma-trend", "limma-voom")
+) {
+  ei <- S4Vectors::metadata(sce)$experiment_info
+
+  group_lvs <- levels(ei$group_id)
+  group_lvs <- group_lvs[group_lvs != target_group]
+
+  ei$group_id <- forcats::fct_collapse(
+    ei$group_id, ..OTHERS = group_lvs)
+
+  mm <- model.matrix(~ 0 + group_id, ei)
+  dimnames(mm) <- list(ei$sample_id, levels(ei$group_id))
+
+  cm <- limma::makeContrasts(
+    contrasts = paste(target_group, "..OTHERS", sep = "-"), levels = mm)
+
+  res <- muscat::pbDS(
+    pb,
+    method = match.arg(method),
+    design = mm,
+    contrast = cm,
+    verbose = FALSE
+  )
+
+  res
+}
+
 check_diff_state_results <- function(x) {
   all(c("table", "data", "fit", "args") %in% names(x))
 }
