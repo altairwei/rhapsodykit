@@ -4,10 +4,10 @@
 \alias{diff_state_filter}
 \title{Filter differential state analysis results by FDR and logFC.}
 \usage{
-diff_state_filter(tbl_list, fdr_limit = 0.05, logfc_limit = 1)
+diff_state_filter(results, fdr_limit = 0.05, logfc_limit = 1)
 }
 \arguments{
-\item{tbl_list}{A list of data.frame that are one of results from
+\item{results}{Results returned by \code{\link[muscat]{pbDS}} or
 \code{\link{pseudobulk_diff_state}}}
 
 \item{fdr_limit}{Upper limit of FDR.}

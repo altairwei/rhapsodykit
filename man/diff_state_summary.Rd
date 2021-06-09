@@ -4,19 +4,11 @@
 \alias{diff_state_summary}
 \title{Summarize results from differential state analysis.}
 \usage{
-diff_state_summary(tbl_list, sce)
+diff_state_summary(results)
 }
 \arguments{
-\item{tbl_list}{A list of data.frame that are one of results from
+\item{results}{Results returned by \code{\link[muscat]{pbDS}} or
 \code{\link{pseudobulk_diff_state}}}
-
-\item{sce}{A SingleCellExperiment object. The following
-cell metadata (\code{colData}) columns have to be provided:
-\describe{
-\item{\code{sample_id}}{unique sample identifiers}
-\item{\code{cluster_id}}{subpopulation (cluster) assignments}
-\item{\code{group_id}}{experimental group/condition}
-}}
 }
 \description{
 Summarize results from differential state analysis.

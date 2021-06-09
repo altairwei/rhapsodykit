@@ -4,21 +4,13 @@
 \alias{genecount_diff_state}
 \title{Plot number of genes per subpopulation per contrast.}
 \usage{
-genecount_diff_state(
-  results,
-  fdr_limit = 0.05,
-  logfc_limit = 1,
-  simplify = FALSE
-)
+genecount_diff_state(results, simplify = FALSE)
 }
 \arguments{
 \item{results}{Results from \code{\link{pseudobulk_diff_state}}}
 
-\item{fdr_limit}{Upper limit of FDR.}
-
-\item{logfc_limit}{Lower limit of absolute value of logFC.}
-
-\item{simplify}{If \code{TRUE}, subpopulation without DS genes won't be shown.}
+\item{simplify}{If \code{TRUE}, subpopulation without DS genes
+won't be shown.}
 }
 \description{
 Plot number of genes per subpopulation per contrast.

@@ -4,10 +4,10 @@
 \alias{diff_state_format}
 \title{Format differential state testing results into an easily filterable table}
 \usage{
-diff_state_format(tbl_list)
+diff_state_format(results)
 }
 \arguments{
-\item{tbl_list}{A list of data.frame that are one of results from
+\item{results}{Results returned by \code{\link[muscat]{pbDS}} or
 \code{\link{pseudobulk_diff_state}}}
 }
 \description{

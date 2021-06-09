@@ -293,27 +293,22 @@ volcano_diff_state <- function(
 #' Plot number of genes per subpopulation per contrast.
 #'
 #' @param results Results from \code{\link{pseudobulk_diff_state}}
-#' @param simplify If \code{TRUE}, subpopulation without DS genes won't be shown.
-#' @inheritParams diff_state_filter
+#' @param simplify If \code{TRUE}, subpopulation without DS genes
+#'  won't be shown.
 #' @export
 genecount_diff_state <- function(
-  results, fdr_limit = 0.05, logfc_limit = 1, simplify = FALSE) {
+  results, simplify = FALSE) {
   p <- results %>%
-    lapply(function(x) {
-      x %>%
-        diff_state_filter(fdr_limit, logfc_limit) %>%
-        dplyr::bind_rows()
-    }) %>%
-    dplyr::bind_rows() %>%
+    diff_state_format() %>%
     ggplot2::ggplot(ggplot2::aes(cluster_id, fill = contrast)) +
-      ggplot2::geom_bar(
-        position = ggplot2::position_dodge2(preserve = "single", padding = 0)) +
-      ggplot2::ylab("Number of DS genes") +
-      ggplot2::xlab("Cell Subpopulation") +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
+    ggplot2::geom_bar(
+      position = ggplot2::position_dodge2(preserve = "single", padding = 0)) +
+    ggplot2::ylab("Number of DS genes") +
+    ggplot2::xlab("Cell Subpopulation") +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
 
   if (!simplify)
-    p <- p + ggplot2::scale_x_discrete(limits = names(results[[1]]))
+    p <- p + ggplot2::scale_x_discrete(limits = names(results$data))
 
   p
 }

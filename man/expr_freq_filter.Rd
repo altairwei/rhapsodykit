@@ -4,10 +4,10 @@
 \alias{expr_freq_filter}
 \title{Filter differential state analysis results by gene expression frequencies.}
 \usage{
-expr_freq_filter(tbl_list, sce, percent = 0.1)
+expr_freq_filter(results, sce, percent = 0.1)
 }
 \arguments{
-\item{tbl_list}{A list of data.frame that are one of results from
+\item{results}{Results returned by \code{\link[muscat]{pbDS}} or
 \code{\link{pseudobulk_diff_state}}}
 
 \item{sce}{A SingleCellExperiment object. The following
