@@ -13,6 +13,14 @@ volcano_diff_state(
 )
 }
 \arguments{
+\item{x}{A data.frame contains following column:
+\describe{
+\item{\code{gene}}{gene names}
+\item{\code{logFC}}{log2 fold change}
+\item{\code{p_adj.loc}}{adjusted p-value}
+\item{\code{cluster_id}}{data source}
+}}
+
 \item{logfc_cut}{Where to add cutoff-line for logFC.}
 
 \item{pval_cut}{Where to add cutoff-line for P value.}

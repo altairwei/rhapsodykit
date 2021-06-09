@@ -242,7 +242,7 @@ plot_placeholder <- function(text) {
 #'   \item{\code{gene}}{gene names}
 #'   \item{\code{logFC}}{log2 fold change}
 #'   \item{\code{p_adj.loc}}{adjusted p-value}
-#'   \item{\code{cluster_id}{data source}
+#'   \item{\code{cluster_id}}{data source}
 #' }
 #' @param logfc_cut Where to add cutoff-line for logFC.
 #' @param pval_cut Where to add cutoff-line for P value.
@@ -288,4 +288,25 @@ volcano_diff_state <- function(
   }
 
   p1
+}
+
+#' Plot number of genes per subpopulation per contrast.
+#'
+#' @param results results from \code{\link{pseudobulk_diff_state}}
+#' @inheritParams diff_state_filter
+#' @export
+genecount_diff_state <- function(results, fdr_limit = 0.05, logfc_limit = 1) {
+  results %>%
+    lapply(function(x) {
+      x %>%
+        diff_state_filter(fdr_limit, logfc_limit) %>%
+        dplyr::bind_rows()
+    }) %>%
+    dplyr::bind_rows() %>%
+    ggplot2::ggplot(ggplot2::aes(cluster_id, fill = contrast)) +
+      ggplot2::geom_bar(
+        position = ggplot2::position_dodge2(preserve = "single", padding = 0)) +
+      ggplot2::ylab("Number of DS genes") +
+      ggplot2::xlab("Cell Subpopulation") +
+      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1))
 }
