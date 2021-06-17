@@ -79,12 +79,14 @@ check_diff_state_results <- function(x) {
 #'  \code{\link{pseudobulk_diff_state}}
 #' @param fdr_limit Upper limit of FDR.
 #' @param logfc_limit Lower limit of absolute value of logFC.
+#' @param ... Other arguments will be passed to \code{\link[dplyr]{filter}}
 #' @return Same as \code{tbl_list}
 #' @export
 diff_state_filter <- function(
   results,
   fdr_limit = 0.05,
-  logfc_limit = 1
+  logfc_limit = 1,
+  ...
 ) {
   stopifnot(check_diff_state_results(results))
 
@@ -93,7 +95,8 @@ diff_state_filter <- function(
       subpopulation <- dplyr::filter(
         subpopulation,
         p_adj.loc < fdr_limit,
-        abs(logFC) > logfc_limit
+        abs(logFC) > logfc_limit,
+        ...
       )
       dplyr::arrange(subpopulation, p_adj.loc)
     })
