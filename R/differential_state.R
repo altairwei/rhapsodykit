@@ -75,33 +75,41 @@ check_diff_state_results <- function(x) {
 
 #' Filter differential state analysis results by FDR and logFC.
 #'
-#' @param results Results returned by \code{\link[muscat]{pbDS}} or
-#'  \code{\link{pseudobulk_diff_state}}
+#' @inheritParams diff_state_filter
 #' @param fdr_limit Upper limit of FDR.
 #' @param logfc_limit Lower limit of absolute value of logFC.
-#' @param ... Other arguments will be passed to \code{\link[dplyr]{filter}}
 #' @return Same as \code{tbl_list}
 #' @export
-diff_state_filter <- function(
-  results,
-  fdr_limit = 0.05,
-  logfc_limit = 1,
-  ...
-) {
+diff_state_significant <- function(
+  results, fdr_limit = 0.05, logfc_limit = 1) {
+  results %>%
+    diff_state_filter(
+      p_adj.loc < fdr_limit,
+      abs(logFC) > logfc_limit
+    ) %>%
+    diff_state_apply(dplyr::arrange, p_adj.loc)
+}
+
+#' Filter differential state analysis results.
+#'
+#' @inheritParams diff_state_apply
+#' @param ... Arguments will be passed to \code{\link[dplyr]{filter}}
+#' @return Same as \code{tbl_list}
+#' @export
+diff_state_filter <- function(results, ...) {
+  diff_state_apply(results, dplyr::filter, ...)
+}
+
+#' Apply funtion on each data.frame of differential state analysis results
+#' @param results Results returned by \code{\link[muscat]{pbDS}} or
+#'  \code{\link{pseudobulk_diff_state}}
+#' @param ... Arguments will be passed to \code{fun}
+#' @export
+diff_state_apply <- function(results, fun, ...) {
   stopifnot(check_diff_state_results(results))
-
   results$table <- lapply(results$table, function(contrast) {
-    lapply(contrast, function(subpopulation) {
-      subpopulation <- dplyr::filter(
-        subpopulation,
-        p_adj.loc < fdr_limit,
-        abs(logFC) > logfc_limit,
-        ...
-      )
-      dplyr::arrange(subpopulation, p_adj.loc)
-    })
+    lapply(contrast, function(subpopulation) fun(subpopulation, ...))
   })
-
   results
 }
 

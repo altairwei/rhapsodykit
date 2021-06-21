@@ -2,21 +2,19 @@
 % Please edit documentation in R/differential_state.R
 \name{diff_state_filter}
 \alias{diff_state_filter}
-\title{Filter differential state analysis results by FDR and logFC.}
+\title{Filter differential state analysis results.}
 \usage{
-diff_state_filter(results, fdr_limit = 0.05, logfc_limit = 1)
+diff_state_filter(results, ...)
 }
 \arguments{
 \item{results}{Results returned by \code{\link[muscat]{pbDS}} or
 \code{\link{pseudobulk_diff_state}}}
 
-\item{fdr_limit}{Upper limit of FDR.}
-
-\item{logfc_limit}{Lower limit of absolute value of logFC.}
+\item{...}{Arguments will be passed to \code{\link[dplyr]{filter}}}
 }
 \value{
 Same as \code{tbl_list}
 }
 \description{
-Filter differential state analysis results by FDR and logFC.
+Filter differential state analysis results.
 }
