@@ -45,7 +45,8 @@ Imports:
     future,
     parallelly,
     abind,
-    forcats
+    forcats,
+    clusterProfiler
 Suggests: 
     testthat
 biocViews: SingleCellWorkflow

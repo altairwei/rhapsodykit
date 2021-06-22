@@ -1,3 +1,5 @@
+ggplot2::theme_set(cowplot::theme_cowplot())
+
 plot_subpopulation_heatmap <- function(
   aggregated, show_gene_name = TRUE) {
   stopifnot(is.matrix(aggregated))
