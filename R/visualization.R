@@ -1,5 +1,10 @@
 ggplot2::theme_set(cowplot::theme_cowplot())
 
+gg_color_hue <- function(n) {
+  hues <- seq(15, 375, length = n + 1)
+  hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
 plot_subpopulation_heatmap <- function(
   aggregated, show_gene_name = TRUE) {
   stopifnot(is.matrix(aggregated))

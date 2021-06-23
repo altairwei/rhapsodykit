@@ -108,21 +108,21 @@ go_barplot_by_level <- function(resdf, x = "GeneRatio", show_category = 20) {
       dplyr::filter(Level == "molecular_function")
   if (nrow(mf) > 0) {
     p_list[[length(p_list) + 1]] <- mf %>% go_barplot(x = x,
-      showCategory = show_category, title = "Molecular Function")
+      show_category = show_category, title = "Molecular Function")
   }
 
   bp <- resdf %>%
     dplyr::filter(Level == "biological_process")
   if (nrow(bp) > 0) {
     p_list[[length(p_list) + 1]] <- bp %>% go_barplot(x = x,
-      showCategory = show_category, title = "Biological Process")
+      show_category = show_category, title = "Biological Process")
   }
 
   cc <- resdf %>%
       dplyr::filter(Level == "cellular_component")
   if (nrow(cc) > 0) {
     p_list[[length(p_list) + 1]] <- cc %>% go_barplot(x = x,
-      showCategory = show_category, title = "Cellular Component")
+      show_category = show_category, title = "Cellular Component")
   }
 
   p <- patchwork::wrap_plots(p_list)

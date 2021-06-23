@@ -184,3 +184,20 @@ diff_state_format <- function(results) {
     lapply(dplyr::bind_rows) %>%
     dplyr::bind_rows()
 }
+
+
+#' Pull out column from diff state results.
+#'
+#' @inheritParams diff_state_apply
+#' @param contrasts choose a contrast.
+#' @param clusters choose a cluster.
+#' @param column choose a column.
+#' @export
+diff_state_pull <- function(results, contrasts, clusters, column) {
+  stopifnot(check_diff_state_results(results))
+  res <- lapply(results$table[contrasts], function(contrast) {
+    lapply(contrast[clusters], function(subpopulation) subpopulation[[column]])
+  })
+
+  unlist(res, use.names = FALSE)
+}
