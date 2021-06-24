@@ -4,7 +4,7 @@
 \alias{diff_state_pull}
 \title{Pull out column from diff state results.}
 \usage{
-diff_state_pull(results, contrasts, clusters, column)
+diff_state_pull(results, contrasts, clusters, columns, simplify = TRUE)
 }
 \arguments{
 \item{results}{Results returned by \code{\link[muscat]{pbDS}} or
@@ -14,7 +14,7 @@ diff_state_pull(results, contrasts, clusters, column)
 
 \item{clusters}{choose a cluster.}
 
-\item{column}{choose a column.}
+\item{columns}{choose a column.}
 }
 \description{
 Pull out column from diff state results.

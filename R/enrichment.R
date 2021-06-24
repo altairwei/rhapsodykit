@@ -48,7 +48,8 @@ enrichment_analysis <- function(genes, go_data) {
 #'
 #' @param resdf Results returned by \code{enrichment_analysis}
 #' @export
-go_barplot <- function(resdf, x = "GeneRatio", show_category = 10, title = "") {
+enrich_barplot <- function(
+  resdf, x = "GeneRatio", show_category = 10, title = "") {
   # Filter empty terms
   resdf <- resdf[!is.na(resdf$Description), ]
   resdf <- resdf[resdf$Count != 0, ]
@@ -100,9 +101,10 @@ go_barplot <- function(resdf, x = "GeneRatio", show_category = 10, title = "") {
 
 #' Plot barplot of each GO level.
 #'
-#' @inheritParams go_barplot
+#' @inheritParams enrich_barplot
 #' @export
-go_barplot_by_level <- function(resdf, x = "GeneRatio", show_category = 20) {
+enrich_barplot_by_level <- function(
+  resdf, x = "GeneRatio", show_category = 20) {
   p_list <- list()
   mf <- resdf %>%
       dplyr::filter(Level == "molecular_function")

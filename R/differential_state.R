@@ -191,13 +191,56 @@ diff_state_format <- function(results) {
 #' @inheritParams diff_state_apply
 #' @param contrasts choose a contrast.
 #' @param clusters choose a cluster.
-#' @param column choose a column.
+#' @param columns choose a column.
 #' @export
-diff_state_pull <- function(results, contrasts, clusters, column) {
+diff_state_pull <- function(
+  results, contrasts, clusters, columns, simplify = TRUE) {
   stopifnot(check_diff_state_results(results))
   res <- lapply(results$table[contrasts], function(contrast) {
-    lapply(contrast[clusters], function(subpopulation) subpopulation[[column]])
+    lapply(contrast[clusters], function(subpopulation) subpopulation[columns])
   })
 
-  unlist(res, use.names = FALSE)
+  if (simplify) {
+    if (length(contrasts) == 1) {
+      if (length(clusters) == 1) {
+        if (length(columns) == 1) {
+          # a vector
+          return(res[[1]][[1]][[1]])
+        } else {
+          # a data.frame
+          return(res[[1]][[1]])
+        }
+      } else {
+        if (length(columns) == 1) {
+          # a vector under each cluster
+          lapply(res[[1]], function(x) x[[1]])
+        } else {
+          # a data.frame under each cluster
+          return(res[[1]])
+        }
+      }
+    } else {
+      if (length(clusters) == 1) {
+        if (length(columns) == 1) {
+          # return a vector under each contrast
+          lapply(res, function(x) x[[1]][[1]])
+        } else {
+          # return a data.frame on each contrast
+          lapply(res, function(x) x[[1]])
+        }
+      } else {
+        if (length(columns) == 1) {
+          # vector under 2-level nested list
+          lapply(res, function(x) {
+            lapply(x, function(y) y[[1]])
+          })
+        } else {
+          # data.frame under 2-level nested list
+          return(res)
+        }
+      }
+    }
+  } else {
+    return(res)
+  }
 }
