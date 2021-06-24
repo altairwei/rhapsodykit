@@ -2,13 +2,32 @@
 % Please edit documentation in R/enrichment.R
 \name{enrich_barplot}
 \alias{enrich_barplot}
-\title{Make barplot of GO enrichment analysis.}
+\alias{enrich_barplot.enrichResult}
+\alias{enrich_barplot.data.frame}
+\title{Make barplot of enrichment analysis.}
 \usage{
-enrich_barplot(resdf, x = "GeneRatio", show_category = 10, title = "")
+enrich_barplot(obj, x = "GeneRatio", show_category = 10, title = "")
+
+\method{enrich_barplot}{enrichResult}(enr, x = "GeneRatio", show_category = 10, title = "")
+
+\method{enrich_barplot}{data.frame}(resdf, x = "GeneRatio", show_category = 10, title = "")
 }
 \arguments{
-\item{resdf}{Results returned by \code{enrichment_analysis}}
+\item{obj}{Results returned by \code{enrichment_analysis}}
+
+\item{x}{Which column used as x-axis}
+
+\item{show_category}{How many annotation terms to show.}
+
+\item{title}{Title of plot.}
 }
 \description{
-Make barplot of GO enrichment analysis.
+Make barplot of enrichment analysis.
 }
+\section{Methods (by class)}{
+\itemize{
+\item \code{enrichResult}: Barplot for \code{enrichResult} instance
+
+\item \code{data.frame}: Barplot for \code{data.frame}
+}}
+

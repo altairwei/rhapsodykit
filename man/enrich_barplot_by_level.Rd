@@ -7,7 +7,9 @@
 enrich_barplot_by_level(resdf, x = "GeneRatio", show_category = 20)
 }
 \arguments{
-\item{resdf}{Results returned by \code{enrichment_analysis}}
+\item{x}{Which column used as x-axis}
+
+\item{show_category}{How many annotation terms to show.}
 }
 \description{
 Plot barplot of each GO level.

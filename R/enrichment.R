@@ -8,8 +8,10 @@
 #'   \item Third column must be named as \code{GO_Name}
 #'   \item Fourth column must be named as \code{GO_Level}
 #' }
+#' @param ... Arguments passed to \code{\link[clusterProfiler]{enricher}}
+#' @return A \code{enrichResult} instance
 #' @export
-enrichment_analysis <- function(genes, go_data) {
+enrichment_analysis <- function(genes, go_data, ...) {
   # Discard genes without annotation
   go_data <- go_data %>%
     dplyr::filter(GO_ID != "")
@@ -25,16 +27,32 @@ enrichment_analysis <- function(genes, go_data) {
 
   # Perform GO enrichment analysis
   enrich_results <- clusterProfiler::enricher(
-    genes, TERM2GENE = go2gene, TERM2NAME = go2name)
+    genes, TERM2GENE = go2gene, TERM2NAME = go2name, ...)
+
+  enrich_results
+}
+
+#' Add GO level data to result of enrichment analysis.
+#'
+#' @param enr A \code{enrichResult} instance
+#' @inheritParams enrichment_analysis
+#' @return A data.frame
+#' @export
+enrich_add_go_level <- function(enr, go_data) {
+  # Discard genes without annotation
+  go_data <- go_data %>%
+    dplyr::filter(GO_ID != "")
 
   # Add GO_Level to results
   go_level_table <- go_data %>%
     dplyr::group_by(GO_ID) %>%
     dplyr::summarize(Level = unique(GO_Level))
-  enrich_results_with_level <- enrich_results %>%
+
+  enrich_results_with_level <- enr %>%
     tibble::as_tibble() %>%
     dplyr::left_join(go_level_table, by = c("ID" = "GO_ID")) %>%
     dplyr::select(ID, Description, Level, dplyr::everything())
+
   enrich_results_with_level <- enrich_results_with_level %>%
     # RichFactor means DEGs of a GO term divided by All Genes of this GO term.
     dplyr::mutate(
@@ -44,11 +62,31 @@ enrichment_analysis <- function(genes, go_data) {
   enrich_results_with_level
 }
 
-#' Make barplot of GO enrichment analysis.
+#' Make barplot of enrichment analysis.
 #'
-#' @param resdf Results returned by \code{enrichment_analysis}
+#' @param obj Results returned by \code{enrichment_analysis}
+#' @param x Which column used as x-axis
+#' @param show_category How many annotation terms to show.
+#' @param title Title of plot.
 #' @export
 enrich_barplot <- function(
+  obj, x = "GeneRatio", show_category = 10, title = "") {
+  UseMethod("enrich_barplot")
+}
+
+#' @describeIn enrich_barplot Barplot for \code{enrichResult} instance
+#' @method enrich_barplot enrichResult
+#' @export
+enrich_barplot.enrichResult <- function(
+  enr, x = "GeneRatio", show_category = 10, title = "") {
+  enrich_barplot(
+    enr@result, x = x, show_category = show_category, title = title)
+}
+
+#' @describeIn enrich_barplot Barplot for \code{data.frame}
+#' @method enrich_barplot data.frame
+#' @export
+enrich_barplot.data.frame <- function(
   resdf, x = "GeneRatio", show_category = 10, title = "") {
   # Filter empty terms
   resdf <- resdf[!is.na(resdf$Description), ]
@@ -138,4 +176,38 @@ parse_ratio <- function(ratio) {
   numerator <- as.numeric(sub("/\\d+$", "", ratio))
   denominator <- as.numeric(sub("^\\d+/", "", ratio))
   return(numerator / denominator)
+}
+
+#' Make Gene-Concept Network plot for enrichment analysis
+#'
+#' @param enr A \code{enrichResult} instance.
+#' @param fold_change A named numeric vector of fold Change.
+#'  The names of \code{fold_change} should be consistent with
+#'  ID of \code{enr}
+#' @param show_category How many annotation terms to show.
+#' @param circular Whether using circular layout.
+#' @export
+enrich_cnetplot <- function(
+  enr,
+  fold_change = NULL,
+  show_category = 10,
+  circular = FALSE
+) {
+  p <- enr %>%
+    enrichplot::cnetplot(
+      foldChange = fold_change,
+      showCategory = show_category,
+      circular = circular,
+      node_label = "none",
+      colorEdge = circular
+    )
+
+  p <- p + ggraph::geom_node_text(
+    ggplot2::aes_(label = ~name),
+    data = p$data[1:show_category, ],
+    repel = TRUE,
+    bg.color = "white"
+  )
+
+  p
 }
