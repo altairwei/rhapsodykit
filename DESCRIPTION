@@ -47,7 +47,9 @@ Imports:
     abind,
     forcats,
     clusterProfiler,
-    ggnewscale
+    ggnewscale,
+    UpSetR,
+    ggupset
 Suggests: 
     testthat
 biocViews: SingleCellWorkflow
