@@ -4,7 +4,12 @@
 \alias{make_pseudo_bulk}
 \title{Make pseudo-bulk RNA-Seq from scRNA-Seq.}
 \usage{
-make_pseudo_bulk(data_folders, normalization = "LogNormalize", method = "avg")
+make_pseudo_bulk(
+  data_folders,
+  normalization = "LogNormalize",
+  method = "avg",
+  ...
+)
 }
 \arguments{
 \item{data_folders}{A vector of Rhapsody WTA results folder path.}
@@ -14,6 +19,8 @@ are same as \code{Seurat::NormalizeData} plus "SCTransform".}
 
 \item{method}{Pseudo-bulk method to apply. Available values
 are \code{avg} and \code{sum} .}
+
+\item{...}{pass to normalization functions.}
 }
 \value{
 A data.frame containing pseudo-bulk RNA-Seq expression data.

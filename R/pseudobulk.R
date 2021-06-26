@@ -5,13 +5,16 @@
 #'    are same as \code{Seurat::NormalizeData} plus "SCTransform".
 #' @param method Pseudo-bulk method to apply. Available values
 #'    are \code{avg} and \code{sum} .
+#' @param ... pass to normalization functions.
 #' @return A data.frame containing pseudo-bulk RNA-Seq expression data.
 #'
 #' @export
 make_pseudo_bulk <- function(
   data_folders,
   normalization = "LogNormalize",
-  method = "avg") {
+  method = "avg",
+  ...
+) {
   stopifnot(is.character(data_folders))
   names(data_folders) <- basename(data_folders)
   mat_list <- lapply(data_folders, function(base_dir) {
@@ -22,7 +25,7 @@ make_pseudo_bulk <- function(
     # Normalization
     if (normalization == "SCTransform") {
       seurat_obj <- Seurat::SCTransform(
-        seurat_obj, do.scale = FALSE)
+        seurat_obj, do.scale = FALSE, ...)
     } else {
       seurat_obj <- Seurat::NormalizeData(
         seurat_obj, normalization.method = normalization)
