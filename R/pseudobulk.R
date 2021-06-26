@@ -28,7 +28,7 @@ make_pseudo_bulk <- function(
         seurat_obj, do.scale = FALSE, ...)
     } else {
       seurat_obj <- Seurat::NormalizeData(
-        seurat_obj, normalization.method = normalization)
+        seurat_obj, normalization.method = normalization, ...)
     }
     # Return normalized data
     Seurat::GetAssayData(seurat_obj)
