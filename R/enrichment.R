@@ -134,6 +134,7 @@ enrich_barplot.data.frame <- function(
         ggplot2::aes_string(label = "Description"),
         x = offset, hjust = 0) +
       ggplot2::ggtitle(title) +
+      cowplot::theme_cowplot() +
       ggplot2::theme(axis.text.y = ggplot2::element_blank())
 }
 
