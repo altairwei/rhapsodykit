@@ -6,10 +6,12 @@
 #'  see \code{\link[limma]{makeContrasts}}. If \code{NULL}, all possible
 #'  combination will be tested.
 #' @param method Specify which bulk RNA-seq DE methods to apply.
+#' @param ... pass to \code{\link[muscat]{pbDS}}
 #' @export
 pseudobulk_diff_state <- function(
   sce, pb, contrasts = NULL,
-  method = c("edgeR", "DESeq2", "limma-trend", "limma-voom")
+  method = c("edgeR", "DESeq2", "limma-trend", "limma-voom"),
+  ...
 ) {
   ei <- S4Vectors::metadata(sce)$experiment_info
 
@@ -29,7 +31,8 @@ pseudobulk_diff_state <- function(
     method = match.arg(method),
     design = mm,
     contrast = cm,
-    verbose = FALSE
+    verbose = FALSE,
+    ...
   )
 
   res

@@ -8,7 +8,8 @@ pseudobulk_diff_state(
   sce,
   pb,
   contrasts = NULL,
-  method = c("edgeR", "DESeq2", "limma-trend", "limma-voom")
+  method = c("edgeR", "DESeq2", "limma-trend", "limma-voom"),
+  ...
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ see \code{\link[limma]{makeContrasts}}. If \code{NULL}, all possible
 combination will be tested.}
 
 \item{method}{Specify which bulk RNA-seq DE methods to apply.}
+
+\item{...}{pass to \code{\link[muscat]{pbDS}}}
 }
 \description{
 Perform differential state analysis on pseudo-bulk data.
