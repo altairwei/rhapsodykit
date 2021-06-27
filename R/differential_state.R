@@ -31,7 +31,6 @@ pseudobulk_diff_state <- function(
     method = match.arg(method),
     design = mm,
     contrast = cm,
-    verbose = FALSE,
     ...
   )
 
