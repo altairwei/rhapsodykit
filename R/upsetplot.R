@@ -54,7 +54,7 @@ upset_plot <- function(df, n_intersections = 15, margin_left = 1.5) {
       n_intersections = n_intersections,
       expand = ggplot2::expansion(c(0, 0), c(0.8, 0.8))) +
     ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(c(0, 0), c(0, 40))) +
+      expand = ggplot2::expansion(c(0, 0.1), c(0, 0))) +
     ggplot2::theme_classic() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0.5, 0.5, 0.5, margin_left, unit = "cm"))
@@ -94,7 +94,7 @@ upset_updown_regulated <- function(
       n_intersections = n_intersections,
       expand = ggplot2::expansion(c(0, 0), c(0.8, 0.8))) +
     ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(c(0, 0), c(0, 40))) +
+      expand = ggplot2::expansion(c(0, 0.1), c(0, 0))) +
     ggplot2::theme_classic() +
     ggplot2::theme(
       plot.margin = ggplot2::margin(0.5, 0.5, 0.5, margin_left, unit = "cm"))
