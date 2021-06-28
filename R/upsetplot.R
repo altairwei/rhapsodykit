@@ -41,9 +41,20 @@ upset_dataframe <- function(bin) {
 #'
 #' @param df A data.frame produced from \code{upset_dataframe}
 #' @param n_intersections How many intersections to show.
-#' @param margin_left Left margin to show sets label
+#' @param x_expansion Expansion for x-axis, see \code{\link[ggplot2]{expansion}}
+#' @param y_expansion Expansion for y-axis, see \code{\link[ggplot2]{expansion}}
+#' @param plot_margin margin around entire plot (unit with the sizes of the top,
+#'  right, bottom, and left margins)
+#' @param ... pass to \code{\link[ggupset]{scale_x_upset}}
 #' @export
-upset_plot <- function(df, n_intersections = 15, margin_left = 1.5) {
+upset_plot <- function(
+  df,
+  n_intersections = 15,
+  x_expansion = ggplot2::expansion(c(0, 0), c(0.8, 0.8)),
+  y_expansion = ggplot2::expansion(c(0, 0.1), c(0, 0)),
+  plot_margin = ggplot2::margin(0.5, 0.5, 0.5, 1.5, unit = "cm"),
+  ...
+) {
   main_plot <- df %>%
     ggplot2::ggplot(ggplot2::aes(x = clusters)) +
     ggplot2::geom_bar() +
@@ -51,13 +62,12 @@ upset_plot <- function(df, n_intersections = 15, margin_left = 1.5) {
       stat = "count", size = 2, vjust = -1,
       mapping = ggplot2::aes(label = ggplot2::after_stat(count))) +
     ggupset::scale_x_upset(
+      expand = x_expansion,
       n_intersections = n_intersections,
-      expand = ggplot2::expansion(c(0, 0), c(0.8, 0.8))) +
-    ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(c(0, 0.1), c(0, 0))) +
+      ...) +
+    ggplot2::scale_y_continuous(expand = y_expansion) +
     ggplot2::theme_classic() +
-    ggplot2::theme(
-      plot.margin = ggplot2::margin(0.5, 0.5, 0.5, margin_left, unit = "cm"))
+    ggplot2::theme(plot.margin = plot_margin)
 
   main_plot
 }
@@ -66,12 +76,17 @@ upset_plot <- function(df, n_intersections = 15, margin_left = 1.5) {
 #'
 #' @param up_list A list of up-regulated gene sets
 #' @param down_list A list of down-regulated gene sets
+#' @param ... pass to \code{\link[ggupset]{scale_x_upset}}
 #' @inheritParams upset_plot
 #' @export
 upset_updown_regulated <- function(
   up_list, down_list,
   n_intersections = 15,
-  margin_left = 1.5) {
+  x_expansion = ggplot2::expansion(c(0, 0), c(0.8, 0.8)),
+  y_expansion = ggplot2::expansion(c(0, 0.1), c(0, 0)),
+  plot_margin = ggplot2::margin(0.5, 0.5, 0.5, 1.5, unit = "cm"),
+  ...
+) {
 
   up_data <- from_list_to_upset(up_list) %>% upset_dataframe()
   down_data <- from_list_to_upset(down_list) %>% upset_dataframe()
@@ -91,13 +106,12 @@ upset_updown_regulated <- function(
       position = ggplot2::position_dodge(width = 0.9),
       mapping = ggplot2::aes(label = ggplot2::after_stat(count))) +
     ggupset::scale_x_upset(
+      expand = x_expansion,
       n_intersections = n_intersections,
-      expand = ggplot2::expansion(c(0, 0), c(0.8, 0.8))) +
-    ggplot2::scale_y_continuous(
-      expand = ggplot2::expansion(c(0, 0.1), c(0, 0))) +
+      ...) +
+    ggplot2::scale_y_continuous(expand =  y_expansion) +
     ggplot2::theme_classic() +
-    ggplot2::theme(
-      plot.margin = ggplot2::margin(0.5, 0.5, 0.5, margin_left, unit = "cm"))
+    ggplot2::theme(plot.margin = plot_margin)
 
   main_plot
 }
