@@ -212,3 +212,228 @@ enrich_cnetplot <- function(
 
   p
 }
+
+#' Prepare significant logFC vector named with gene names.
+#'
+#' @param ds Results returned by \code{\link[muscat]{pbDS}} or
+#'  \code{\link{pseudobulk_diff_state}}
+#' @inheritParams diff_state_pull
+#' @param FDR Upper limit of FDR.
+#' @param logFC Lower limit of absolute value of logFC.
+#' @return A logFC vector named gene names
+#' @export
+enrich_significant_lfc <- function(ds, contrasts, clusters, FDR, logFC) {
+  df <- ds %>%
+      diff_state_significant(FDR, logFC) %>%
+      diff_state_pull(contrasts, clusters, c("gene", "logFC"))
+
+  fc_list <- df[, "logFC"]
+  names(fc_list) <- as.character(df[, "gene"])
+
+  fc_list
+}
+
+#' Prepare ranked logFC vector named with gene names.
+#'
+#' @inheritParams enrich_significant_lfc
+#' @return A ranked logFC vector named gene names
+#' @export
+enrich_ranked_lfc <- function(ds, contrasts, clusters) {
+  df <-  ds %>%
+    # We don't need to filter genes with given cutoff
+    diff_state_pull(contrasts, clusters, c("gene", "logFC"))
+
+  fc_list <- df[, "logFC"]
+  names(fc_list) <- as.character(df[, "gene"])
+
+  ranked_list <- sort(fc_list, decreasing = TRUE)
+
+  ranked_list
+}
+
+#' Perform over representation analysis
+#'
+#' @inheritParams enrich_significant_lfc
+#' @inheritParams enrichment_analysis
+#' @inheritDotParams enrichment_analysis
+#' @return A \code{enrichResult} instance
+#' @export
+enrich_perform_ora <- function(
+  ds, go_data, contrasts, clusters, FDR, logFC, ...
+) {
+  gene_lfc <- enrich_significant_lfc(ds, contrasts, clusters, FDR, logFC)
+
+  go_data <- go_data %>%
+    dplyr::filter(GO_ID != "")
+
+  go2gene <- go_data %>%
+    dplyr::select(GO_ID, Gene_ID)
+  go2name <- go_data %>%
+    dplyr::select(GO_ID, GO_Name)
+
+  ora <- clusterProfiler::enricher(
+    names(gene_lfc), TERM2GENE = go2gene, TERM2NAME = go2name, ...)
+
+  ora
+}
+
+#' Perform gene set enrichment analysis
+#'
+#' @inheritParams enrich_ranked_lfc
+#' @inheritParams enrichment_analysis
+#' @param ... pass to \code{\link[clusterProfiler]{GSEA}}
+#' @return A \code{gseaResult} instance
+#' @export
+enrich_perform_gsea <- function(ds, go_data, contrasts, clusters, ...) {
+  ranked_list <- enrich_ranked_lfc(ds, contrasts, clusters)
+
+  go_data <- go_data %>%
+    dplyr::filter(GO_ID != "")
+
+  go2gene <- go_data %>%
+    dplyr::select(GO_ID, Gene_ID)
+  go2name <- go_data %>%
+    dplyr::select(GO_ID, GO_Name)
+
+  gsea <- clusterProfiler::GSEA(
+    ranked_list, TERM2GENE = go2gene, TERM2NAME = go2name, ...)
+
+  gsea
+}
+
+#' Perform GSEA on gene clusters.
+#'
+#' @param ranked_clusters a list of ranked logFC vector.
+#' @param ... pass to \code{\link[clusterProfiler]{GSEA}}
+#' @return A un-official \code{compareClusterResult} object
+#' @export
+enrich_compare_gsea <- function(ranked_clusters, ...) {
+  gsea_list <- lapply(ranked_clusters, function(i) {
+    x <- suppressMessages(clusterProfiler::GSEA(i, ...))
+    if (class(x) == "gseaResult") {
+      as.data.frame(x)
+    }
+  })
+
+  clusters_levels <- names(ranked_clusters)
+
+  df <- dplyr::bind_rows(gsea_list, .id = "Cluster")
+  df[["Cluster"]] <- factor(df$Cluster, levels = clusters_levels)
+
+  new("compareClusterResult",
+    compareClusterResult = df,
+    geneClusters = ranked_clusters,
+    fun = "GSEA",
+    .call = match.call(expand.dots = TRUE)
+  )
+}
+
+#' ep_str_wrap internal string wrapping function
+#' @param string the string to be wrapped
+#' @param width the maximum number of characters before wrapping to a new line
+#' @author Guangchuang Yu
+#' @noRd
+ep_str_wrap <- function(string, width) {
+  x <- gregexpr(" ", string)
+  vapply(seq_along(x),
+    FUN = function(i) {
+      y <- x[[i]]
+      n <- nchar(string[i])
+      len <- (c(y, n) - c(0, y))
+      idx <- len > width
+      j <- which(!idx)
+      if (length(j) && max(j) == length(len)) {
+        j <- j[-length(j)]
+      }
+      if (length(j)) {
+        idx[j] <- len[j] + len[j + 1] > width
+      }
+      idx <- idx[-length(idx)]
+      start <- c(1, y[idx] + 1)
+      end <- c(y[idx] - 1, n)
+      words <- substring(string[i], start, end)
+      paste0(words, collapse = "\n")
+    },
+    FUN.VALUE = character(1)
+  )
+}
+
+#' Compare dotplot for GSEA
+#'
+#' @param object input object
+#' @param show_category number of enriched terms to display
+#' @param font_size font size
+#' @param label_format a numeric value sets wrap length, alternatively
+#'  a custom function to format axis labels. by default wraps names
+#'  longer that 30 characters
+#' @param title plot title
+#' @export
+dotplot_for_gsea <- function(
+  object,
+  show_category = 5,
+  font_size = 12,
+  label_format = 30,
+  title = ""
+) {
+  df <- as.data.frame(object)
+
+  if (is.null(show_category)) {
+    result <- df
+  } else if (is.numeric(show_category)) {
+    top_n <- function(res, show_category) {
+      res %>%
+        dplyr::group_split(Cluster) %>%
+        purrr::map_dfr(function(df, N) {
+          if (length(df$setSize) > N) {
+            idx <- order(df$pvalue, decreasing = FALSE)[1:N]
+            return(df[idx, ])
+          } else {
+            return(df)
+          }
+        }, N = show_category)
+    }
+
+    result <- top_n(df, show_category)
+  } else {
+    result <- subset(df, Description %in% show_category)
+  }
+
+  ## remove zero count
+  result$Description <- as.character(result$Description) ## un-factor
+  GOlevel <- result[, c("ID", "Description")] ## GO ID and Term
+  GOlevel <- unique(GOlevel)
+
+  result <- result[result$setSize != 0, ]
+  result$Description <- factor(
+    result$Description, levels = rev(GOlevel$Description))
+
+  core_count <- function(core_enrichment) {
+    core_enrichment %>%
+      stringr::str_split("/") %>%
+      sapply(length)
+  }
+
+  result <- dplyr::mutate(result, Count = core_count(core_enrichment))
+
+  label_func <- function(str) {
+    ep_str_wrap(str, label_format)
+  }
+
+  if(is.function(label_format)) {
+      label_func <- label_format
+  }
+
+  p <- ggplot2::ggplot(result, ggplot2::aes_string(
+      x = "Cluster", y = "Description", size = "Count")) +
+    ggplot2::geom_point(ggplot2::aes_string(color = "p.adjust")) +
+    ggplot2::scale_color_continuous(
+      low = "red", high = "blue",
+      guide = ggplot2::guide_colorbar(reverse=TRUE)) +
+    ggplot2::ylab(NULL) +
+    ggplot2::ggtitle(title) +
+    DOSE::theme_dose(font_size) +
+    ggplot2::scale_size_continuous(range = c(3, 8)) +
+    ggplot2::scale_y_discrete(labels = label_func)
+
+  p
+}
