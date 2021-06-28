@@ -222,7 +222,8 @@ enrich_cnetplot <- function(
 #' @param logFC Lower limit of absolute value of logFC.
 #' @return A logFC vector named gene names
 #' @export
-enrich_significant_lfc <- function(ds, contrasts, clusters, FDR, logFC) {
+enrich_significant_lfc <- function(
+  ds, contrasts, clusters, FDR = 0.05, logFC = 1) {
   df <- ds %>%
       diff_state_significant(FDR, logFC) %>%
       diff_state_pull(contrasts, clusters, c("gene", "logFC"))
@@ -259,7 +260,7 @@ enrich_ranked_lfc <- function(ds, contrasts, clusters) {
 #' @return A \code{enrichResult} instance
 #' @export
 enrich_perform_ora <- function(
-  ds, go_data, contrasts, clusters, FDR, logFC, ...
+  ds, go_data, contrasts, clusters, FDR = 0.05, logFC = 1, ...
 ) {
   gene_lfc <- enrich_significant_lfc(ds, contrasts, clusters, FDR, logFC)
 
