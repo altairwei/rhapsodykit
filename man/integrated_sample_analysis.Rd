@@ -4,12 +4,26 @@
 \alias{integrated_sample_analysis}
 \title{Perform Seurat integrated analysis for stimulated samples}
 \usage{
-integrated_sample_analysis(obj_list, dimensionality = 20)
+integrated_sample_analysis(
+  obj_list,
+  dimensionality = 20,
+  reduction = c("cca", "rpca"),
+  k.anchor = 5
+)
 }
 \arguments{
 \item{obj_list}{A list of Seurat objects.}
 
 \item{dimensionality}{Number of dimensions to use as input.}
+
+\item{reduction}{Dimensional reduction to perform when finding anchors. Can
+be one of:
+\itemize{
+  \item{cca: Canonical correlation analysis}
+  \item{rpca: Reciprocal PCA}
+}}
+
+\item{k.anchor}{How many neighbors (k) to use when picking anchors}
 }
 \value{
 A integrated Seurat object.

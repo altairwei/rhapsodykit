@@ -4,7 +4,7 @@
 \alias{enrich_significant_lfc}
 \title{Prepare significant logFC vector named with gene names.}
 \usage{
-enrich_significant_lfc(ds, contrasts, clusters, FDR, logFC)
+enrich_significant_lfc(ds, contrasts, clusters, FDR = 0.05, logFC = 1)
 }
 \arguments{
 \item{ds}{Results returned by \code{\link[muscat]{pbDS}} or

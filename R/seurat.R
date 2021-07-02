@@ -277,14 +277,35 @@ single_sample_analysis <- function(
 #'
 #' @param obj_list A list of Seurat objects.
 #' @param dimensionality Number of dimensions to use as input.
+#' @inheritParams Seurat::FindIntegrationAnchors
 #' @return A integrated Seurat object.
 #'
 #' @export
-integrated_sample_analysis <- function(obj_list, dimensionality = 20) {
+integrated_sample_analysis <- function(
+  obj_list, dimensionality = 20,
+  reduction = c("cca", "rpca"),
+  k.anchor = 5
+) {
   stopifnot(is.list(obj_list))
 
+  features <- Seurat::SelectIntegrationFeatures(object.list = obj_list)
+
+  reduction <- match.arg(reduction)
+  if (reduction == "rpca") {
+    obj_list <- lapply(obj_list, function(x) {
+        x <- Seurat::ScaleData(x, features = features, verbose = FALSE)
+        x <- Seurat::RunPCA(x, features = features, verbose = FALSE)
+    })
+  }
+
   obj_anchors <- Seurat::FindIntegrationAnchors(
-    obj_list, dims = 1:dimensionality)
+    obj_list,
+    dims = 1:dimensionality,
+    reduction = reduction,
+    anchor.features = features,
+    k.anchor = k.anchor
+  )
+
   obj_combined <- Seurat::IntegrateData(
     anchorset = obj_anchors, dims = 1:dimensionality)
   Seurat::DefaultAssay(obj_combined) <- "integrated"

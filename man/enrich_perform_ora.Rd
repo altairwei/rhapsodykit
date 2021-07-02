@@ -4,7 +4,15 @@
 \alias{enrich_perform_ora}
 \title{Perform over representation analysis}
 \usage{
-enrich_perform_ora(ds, go_data, contrasts, clusters, FDR, logFC, ...)
+enrich_perform_ora(
+  ds,
+  go_data,
+  contrasts,
+  clusters,
+  FDR = 0.05,
+  logFC = 1,
+  ...
+)
 }
 \arguments{
 \item{ds}{Results returned by \code{\link[muscat]{pbDS}} or
