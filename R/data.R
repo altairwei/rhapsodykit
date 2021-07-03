@@ -15,6 +15,11 @@ save_png <- function(filename, plot, width = 7, height = 7, dpi = 300) {
   dev.off()
 }
 
+#' Read raw expression matrix from Rhapsody WTA pipeline
+#'
+#' @param base_dir Root folder of Rhapsody WTA pipeline results
+#' @return An object constructed from \code{\link[Matrix]{Matrix}}
+#' @export
 read_raw_csv <- function(base_dir = ".") {
   if (!dir.exists(base_dir)) {
     stop("Directory provided does not exist")
@@ -45,6 +50,27 @@ read_raw_csv <- function(base_dir = ".") {
   mtx
 }
 
+#' Save Matrix data to disk.
+#'
+#' @param mtx An \code{\link[Matrix]{Matrix}} object produced
+#'  from \code{read_raw_csv}
+#' @param mtx_file Output filename
+#' @export
+save_expression_matrix <- function(mtx, mtx_file) {
+  colnames_file <- sprintf("%s.colnames", mtx_file)
+  rownames_file <- sprintf("%s.rownames", mtx_file)
+
+  message(sprintf("Writting %s", mtx_file))
+  Matrix::writeMM(mtx, file = mtx_file)
+  write(colnames(mtx), colnames_file)
+  write(rownames(mtx), rownames_file)
+}
+
+#' Read \code{Matrix} data from cached folder.
+#'
+#' @param base_dir Folder contains cached \code{\link[Matrix]{Matrix}} object.
+#' @return An object constructed from \code{\link[Matrix]{Matrix}}
+#' @export
 read_mtx <- function(base_dir = ".") {
   if (!dir.exists(base_dir)) {
     stop("Directory provided does not exist")
