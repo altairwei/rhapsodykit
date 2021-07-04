@@ -182,7 +182,7 @@ perform_find_all_markers <- function(object, output_folder) {
     object, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
   readr::write_csv(markers_df, file.path(output_folder, "Markers_All.csv"))
   top10 <- dplyr::top_n(
-    dplyr::group_by(markers_df, cluster), n = 10, wt = avg_logFC)
+    dplyr::group_by(markers_df, cluster), n = 10, wt = avg_log2FC)
   marker_heatmap <- Seurat::DoHeatmap(
     object, features = top10$gene) + Seurat::NoLegend()
   save_plot(
