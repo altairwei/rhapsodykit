@@ -20,7 +20,7 @@ Imports:
     purrr,
     stringr,
     readr,
-    Seurat,
+    Seurat (== 3.2.3),
     Matrix,
     ggplot2,
     cowplot,
