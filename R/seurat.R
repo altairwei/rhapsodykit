@@ -282,12 +282,14 @@ single_sample_analysis <- function(
 #'
 #' @export
 integrated_sample_analysis <- function(
-  obj_list, dimensionality = 20,
+  obj_list, n_dims = 20,
   reduction = c("cca", "rpca"),
   k.anchor = 5,
+  reference = NULL,
   ...
 ) {
-  stopifnot(is.list(obj_list))
+
+  stopifnot(all(sapply(obj_list, inherits, "Seurat")))
 
   obj_list <- lapply(obj_list, function(obj) {
     # TODO: 增加 SCTransform 的选项！
@@ -308,14 +310,15 @@ integrated_sample_analysis <- function(
 
   obj_anchors <- Seurat::FindIntegrationAnchors(
     obj_list,
-    dims = 1:dimensionality,
+    dims = 1:n_dims,
     reduction = reduction,
     anchor.features = features,
-    k.anchor = k.anchor
+    k.anchor = k.anchor,
+    reference = reference
   )
 
   obj_combined <- Seurat::IntegrateData(
-    anchorset = obj_anchors, dims = 1:dimensionality)
+    anchorset = obj_anchors, dims = 1:n_dims)
 
   Seurat::DefaultAssay(obj_combined) <- "integrated"
 
@@ -324,13 +327,13 @@ integrated_sample_analysis <- function(
   obj_combined <- Seurat::RunPCA(obj_combined)
   # t-SNE and Clustering
   #TODO: Make sure umap-learn work properly
-  obj_combined <- Seurat::RunUMAP(obj_combined, dims = 1:dimensionality)
+  obj_combined <- Seurat::RunUMAP(obj_combined, dims = 1:n_dims)
   #TODO: Check duplicates manually
   # Workaround: https://github.com/satijalab/seurat/issues/167
   obj_combined <- Seurat::RunTSNE(
-    obj_combined, dims = 1:dimensionality, check_duplicates = FALSE)
+    obj_combined, dims = 1:n_dims, check_duplicates = FALSE)
 
-  obj_combined <- Seurat::FindNeighbors(obj_combined, dims = 1:dimensionality)
+  obj_combined <- Seurat::FindNeighbors(obj_combined, dims = 1:n_dims)
   obj_combined <- Seurat::FindClusters(obj_combined, resolution = 0.5)
 
   obj_combined

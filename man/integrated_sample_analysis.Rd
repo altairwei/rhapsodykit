@@ -6,16 +6,15 @@
 \usage{
 integrated_sample_analysis(
   obj_list,
-  dimensionality = 20,
+  n_dims = 20,
   reduction = c("cca", "rpca"),
   k.anchor = 5,
+  reference = NULL,
   ...
 )
 }
 \arguments{
 \item{obj_list}{A list of Seurat objects.}
-
-\item{dimensionality}{Number of dimensions to use as input.}
 
 \item{reduction}{Dimensional reduction to perform when finding anchors. Can
 be one of:
@@ -26,6 +25,16 @@ be one of:
 }}
 
 \item{k.anchor}{How many neighbors (k) to use when picking anchors}
+
+\item{reference}{A vector specifying the object/s to be used as a reference
+during integration. If NULL (default), all pairwise anchors are found (no
+reference/s). If not NULL, the corresponding objects in \code{object.list}
+will be used as references. When using a set of specified references, anchors
+are first found between each query and each reference. The references are
+then integrated through pairwise integration. Each query is then mapped to
+the integrated reference.}
+
+\item{dimensionality}{Number of dimensions to use as input.}
 }
 \value{
 A integrated Seurat object.
