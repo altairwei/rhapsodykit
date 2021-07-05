@@ -8,7 +8,8 @@ integrated_sample_analysis(
   obj_list,
   dimensionality = 20,
   reduction = c("cca", "rpca"),
-  k.anchor = 5
+  k.anchor = 5,
+  ...
 )
 }
 \arguments{
@@ -21,6 +22,7 @@ be one of:
 \itemize{
   \item{cca: Canonical correlation analysis}
   \item{rpca: Reciprocal PCA}
+  \item{rlsi: Reciprocal LSI}
 }}
 
 \item{k.anchor}{How many neighbors (k) to use when picking anchors}

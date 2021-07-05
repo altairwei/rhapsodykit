@@ -284,9 +284,17 @@ single_sample_analysis <- function(
 integrated_sample_analysis <- function(
   obj_list, dimensionality = 20,
   reduction = c("cca", "rpca"),
-  k.anchor = 5
+  k.anchor = 5,
+  ...
 ) {
   stopifnot(is.list(obj_list))
+
+  obj_list <- lapply(obj_list, function(obj) {
+    # TODO: 增加 SCTransform 的选项！
+    obj <- Seurat::NormalizeData(obj)
+    obj <- Seurat::FindVariableFeatures(
+      obj, selection.method = "vst", nfeatures = 2000)
+  })
 
   features <- Seurat::SelectIntegrationFeatures(object.list = obj_list)
 
@@ -308,6 +316,7 @@ integrated_sample_analysis <- function(
 
   obj_combined <- Seurat::IntegrateData(
     anchorset = obj_anchors, dims = 1:dimensionality)
+
   Seurat::DefaultAssay(obj_combined) <- "integrated"
 
   # Run the standard workflow for visualization and clustering
