@@ -273,22 +273,47 @@ single_sample_analysis <- function(
   seurat_obj
 }
 
-#' Perform Seurat integrated analysis for stimulated samples
+#' Perform Seurat integrated analysis for grouped samples
 #'
-#' @param obj_list A list of Seurat objects.
-#' @param dimensionality Number of dimensions to use as input.
-#' @inheritParams Seurat::FindIntegrationAnchors
+#' @inheritParams integration_anchorset
+#' @param analyze Perform general Seurat analysis on integrated object or not.
+#' @param ... pass to \code{integration_anchorset}
 #' @return A integrated Seurat object.
 #'
 #' @export
 integrated_sample_analysis <- function(
-  obj_list, n_dims = 20,
+  obj_list, n_dims = 20, analyze = TRUE, ...
+) {
+  obj_anchors <- integration_anchorset(
+    obj_list = obj_list, n_dims = n_dims, ...)
+
+  obj_combined <- Seurat::IntegrateData(
+    anchorset = obj_anchors, dims = 1:n_dims)
+
+  if (analyze)
+    obj_combined <- integration_analysis(obj_combined)
+
+  obj_combined
+}
+
+#' Get integration anchorset from Seurat objects.
+#'
+#' @param obj_list A list of Seurat objects.
+#' @param n_dims Number of dimensions to use as input.
+#' @param ... pass to \code{\link[Seurat]{FindIntegrationAnchors}
+#' @inheritParams Seurat::FindIntegrationAnchors
+#' @return Returns an \code{AnchorSet} object that can be used as input
+#'  to \code{\link[Seurat]{IntegrateData}}.
+#'
+#' @export
+integration_anchorset <- function(
+  obj_list,
+  n_dims = 20,
   reduction = c("cca", "rpca"),
   k.anchor = 5,
   reference = NULL,
   ...
 ) {
-
   stopifnot(all(sapply(obj_list, inherits, "Seurat")))
 
   obj_list <- lapply(obj_list, function(obj) {
@@ -314,29 +339,42 @@ integrated_sample_analysis <- function(
     reduction = reduction,
     anchor.features = features,
     k.anchor = k.anchor,
-    reference = reference
+    reference = reference,
+    ...
   )
 
-  obj_combined <- Seurat::IntegrateData(
-    anchorset = obj_anchors, dims = 1:n_dims)
+  obj_anchors
+}
 
-  Seurat::DefaultAssay(obj_combined) <- "integrated"
+#' Perform general Seurat analysis on integrated object
+#'
+#' @param object Integrated Seurat object
+#' @param n_dims Number of dimensions to use as input.
+#' @param cluster_res Resolution for \code{\link[Seurat]{FindClusters}}
+#' @return A Seurat object
+#' @export
+integration_analysis <- function(
+  object, n_dims = 20, cluster_res = 0.5
+) {
+  Seurat::DefaultAssay(object) <- "integrated"
 
   # Run the standard workflow for visualization and clustering
-  obj_combined <- Seurat::ScaleData(obj_combined)
-  obj_combined <- Seurat::RunPCA(obj_combined)
+  object <- Seurat::ScaleData(object)
+  object <- Seurat::RunPCA(object)
   # t-SNE and Clustering
+
   #TODO: Make sure umap-learn work properly
-  obj_combined <- Seurat::RunUMAP(obj_combined, dims = 1:n_dims)
+  object <- Seurat::RunUMAP(object, dims = 1:n_dims)
+
   #TODO: Check duplicates manually
   # Workaround: https://github.com/satijalab/seurat/issues/167
-  obj_combined <- Seurat::RunTSNE(
-    obj_combined, dims = 1:n_dims, check_duplicates = FALSE)
+  object <- Seurat::RunTSNE(
+    object, dims = 1:n_dims, check_duplicates = FALSE)
 
-  obj_combined <- Seurat::FindNeighbors(obj_combined, dims = 1:n_dims)
-  obj_combined <- Seurat::FindClusters(obj_combined, resolution = 0.5)
+  object <- Seurat::FindNeighbors(object, dims = 1:n_dims)
+  object <- Seurat::FindClusters(object, resolution = cluster_res)
 
-  obj_combined
+  object
 }
 
 plot_clustree <- function(object) {

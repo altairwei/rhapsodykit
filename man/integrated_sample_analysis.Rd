@@ -2,43 +2,22 @@
 % Please edit documentation in R/seurat.R
 \name{integrated_sample_analysis}
 \alias{integrated_sample_analysis}
-\title{Perform Seurat integrated analysis for stimulated samples}
+\title{Perform Seurat integrated analysis for grouped samples}
 \usage{
-integrated_sample_analysis(
-  obj_list,
-  n_dims = 20,
-  reduction = c("cca", "rpca"),
-  k.anchor = 5,
-  reference = NULL,
-  ...
-)
+integrated_sample_analysis(obj_list, n_dims = 20, analyze = TRUE, ...)
 }
 \arguments{
 \item{obj_list}{A list of Seurat objects.}
 
-\item{reduction}{Dimensional reduction to perform when finding anchors. Can
-be one of:
-\itemize{
-  \item{cca: Canonical correlation analysis}
-  \item{rpca: Reciprocal PCA}
-  \item{rlsi: Reciprocal LSI}
-}}
+\item{n_dims}{Number of dimensions to use as input.}
 
-\item{k.anchor}{How many neighbors (k) to use when picking anchors}
+\item{analyze}{Perform general Seurat analysis on integrated object or not.}
 
-\item{reference}{A vector specifying the object/s to be used as a reference
-during integration. If NULL (default), all pairwise anchors are found (no
-reference/s). If not NULL, the corresponding objects in \code{object.list}
-will be used as references. When using a set of specified references, anchors
-are first found between each query and each reference. The references are
-then integrated through pairwise integration. Each query is then mapped to
-the integrated reference.}
-
-\item{dimensionality}{Number of dimensions to use as input.}
+\item{...}{pass to \code{integration_anchorset}}
 }
 \value{
 A integrated Seurat object.
 }
 \description{
-Perform Seurat integrated analysis for stimulated samples
+Perform Seurat integrated analysis for grouped samples
 }
