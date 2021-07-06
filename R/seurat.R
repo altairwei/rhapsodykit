@@ -391,7 +391,8 @@ find_all_avg_expr_genes <- function(object) {
     # Specify identity of cells based on value of meta.data[["sample"]]
     Seurat::Idents(ident_cells) <- "sample"
     # AverageExpression will be applied to every `Assay` object.
-    avg_ident_cells <- log1p(Seurat::AverageExpression(ident_cells)$RNA)
+    avg_ident_cells <- as.data.frame(
+      log1p(Seurat::AverageExpression(ident_cells)$RNA))
     avg_ident_cells[["cluster"]] <- i
     avg_ident_cells[["gene"]] <- rownames(avg_ident_cells)
     avg_ident_cells
