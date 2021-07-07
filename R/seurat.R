@@ -377,14 +377,6 @@ integration_analysis <- function(
   object
 }
 
-plot_clustree <- function(object) {
-  if (suppressPackageStartupMessages(!require("clustree")))
-    install.packages("clustree")
-  obj <- Seurat::FindClusters(
-    object, resolution = seq(0.4, 1.6, 0.2))
-  clustree::clustree(obj@meta.data, prefix = "RNA_snn_res.")
-}
-
 #' Find conserved markers for all cell identity classes
 #'
 #' @param object A Seurat object.
