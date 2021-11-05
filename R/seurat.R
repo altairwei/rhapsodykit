@@ -296,7 +296,7 @@ merge_sample <- function(obj_list) {
     cell_id_prefix <- names(obj_list)
   }
 
-  obj_merged <- SeuratObject::merge(
+  obj_merged <- merge(
     x = obj_list[[1]],
     y = obj_list[-1],
     merge.data = TRUE,
