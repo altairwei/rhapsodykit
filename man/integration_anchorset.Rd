@@ -10,6 +10,7 @@ integration_anchorset(
   reduction = c("cca", "rpca"),
   k.anchor = 5,
   reference = NULL,
+  normalization = "LogNormalize",
   ...
 )
 }
@@ -35,6 +36,8 @@ will be used as references. When using a set of specified references, anchors
 are first found between each query and each reference. The references are
 then integrated through pairwise integration. Each query is then mapped to
 the integrated reference.}
+
+\item{normalization}{Normalization method.}
 }
 \value{
 Returns an \code{AnchorSet} object that can be used as input

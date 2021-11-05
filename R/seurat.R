@@ -276,17 +276,24 @@ single_sample_analysis <- function(
 #' Merge Seurat objects into one without batch effect correction
 #'
 #' @inheritParams integrated_sample_analysis
+#' @param normalization Normalization method
 #' @return A merged Seurat object
 #'
 #' @export
-merge_sample <- function(obj_list) {
+merge_sample <- function(
+  obj_list, normalization = "LogNormalize") {
 
   stopifnot(all(sapply(obj_list, inherits, "Seurat")))
   stopifnot(length(obj_list) >= 2)
 
   obj_list <- lapply(obj_list, function(obj) {
-    # TODO: 增加 SCTransform 的选项！
-    obj <- Seurat::NormalizeData(obj)
+
+    if (normalization == "SCTransform") {
+      obj <- Seurat::SCTransform(obj, do.scale = FALSE)
+    } else {
+      obj <- Seurat::NormalizeData(obj, normalization.method = normalization)
+    }
+
     obj <- Seurat::FindVariableFeatures(
       obj, selection.method = "vst", nfeatures = 2000)
   })
@@ -296,6 +303,8 @@ merge_sample <- function(obj_list) {
     cell_id_prefix <- names(obj_list)
   }
 
+  # same normalization approach was applied to all objects,
+  # so we merge data slot too.
   obj_merged <- merge(
     x = obj_list[[1]],
     y = obj_list[-1],
@@ -333,6 +342,7 @@ integrated_sample_analysis <- function(
 #'
 #' @param obj_list A list of Seurat objects.
 #' @param n_dims Number of dimensions to use as input.
+#' @param normalization Normalization method.
 #' @param ... pass to \code{\link[Seurat]{FindIntegrationAnchors}
 #' @inheritParams Seurat::FindIntegrationAnchors
 #' @return Returns an \code{AnchorSet} object that can be used as input
@@ -345,13 +355,19 @@ integration_anchorset <- function(
   reduction = c("cca", "rpca"),
   k.anchor = 5,
   reference = NULL,
+  normalization = "LogNormalize",
   ...
 ) {
   stopifnot(all(sapply(obj_list, inherits, "Seurat")))
 
   obj_list <- lapply(obj_list, function(obj) {
-    # TODO: 增加 SCTransform 的选项！
-    obj <- Seurat::NormalizeData(obj)
+
+    if (normalization == "SCTransform") {
+      obj <- Seurat::SCTransform(obj, do.scale = FALSE)
+    } else {
+      obj <- Seurat::NormalizeData(obj, normalization.method = normalization)
+    }
+
     obj <- Seurat::FindVariableFeatures(
       obj, selection.method = "vst", nfeatures = 2000)
   })

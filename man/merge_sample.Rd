@@ -4,10 +4,12 @@
 \alias{merge_sample}
 \title{Merge Seurat objects into one without batch effect correction}
 \usage{
-merge_sample(obj_list)
+merge_sample(obj_list, normalization = "LogNormalize")
 }
 \arguments{
 \item{obj_list}{A list of Seurat objects.}
+
+\item{normalization}{Normalization method}
 }
 \value{
 A merged Seurat object
