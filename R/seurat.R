@@ -273,6 +273,39 @@ single_sample_analysis <- function(
   seurat_obj
 }
 
+#' Merge Seurat objects into one without batch effect correction
+#'
+#' @inheritParams integrated_sample_analysis
+#' @return A merged Seurat object
+#'
+#' @export
+merge_sample <- function(obj_list) {
+
+  stopifnot(all(sapply(obj_list, inherits, "Seurat")))
+  stopifnot(length(obj_list) == 2)
+
+  obj_list <- lapply(obj_list, function(obj) {
+    # TODO: 增加 SCTransform 的选项！
+    obj <- Seurat::NormalizeData(obj)
+    obj <- Seurat::FindVariableFeatures(
+      obj, selection.method = "vst", nfeatures = 2000)
+  })
+
+  cell_id_prefix <- NULL
+  if (!is.null(names(obj_list))) {
+    cell_id_prefix <- names(obj_list)
+  }
+
+  obj_merged <- SeuratObject::merge(
+    x = obj_list[[1]],
+    y = obj_list[-1],
+    merge.data = TRUE,
+    add.cell.ids = cell_id_prefix
+  )
+
+  obj_merged
+}
+
 #' Perform Seurat integrated analysis for grouped samples
 #'
 #' @inheritParams integration_anchorset
