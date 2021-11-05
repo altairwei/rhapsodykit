@@ -282,7 +282,7 @@ single_sample_analysis <- function(
 merge_sample <- function(obj_list) {
 
   stopifnot(all(sapply(obj_list, inherits, "Seurat")))
-  stopifnot(length(obj_list) == 2)
+  stopifnot(length(obj_list) >= 2)
 
   obj_list <- lapply(obj_list, function(obj) {
     # TODO: 增加 SCTransform 的选项！
