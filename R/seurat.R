@@ -281,38 +281,58 @@ single_sample_analysis <- function(
 #'
 #' @export
 merge_sample <- function(
-  obj_list, normalization = "LogNormalize") {
-
+  obj_list, normalization = "LogNormalize", analyze = TRUE
+) {
   stopifnot(all(sapply(obj_list, inherits, "Seurat")))
   stopifnot(length(obj_list) >= 2)
-
-  obj_list <- lapply(obj_list, function(obj) {
-
-    if (normalization == "SCTransform") {
-      obj <- Seurat::SCTransform(obj, do.scale = FALSE)
-    } else {
-      obj <- Seurat::NormalizeData(obj, normalization.method = normalization)
-    }
-
-    obj <- Seurat::FindVariableFeatures(
-      obj, selection.method = "vst", nfeatures = 2000)
-  })
 
   cell_id_prefix <- NULL
   if (!is.null(names(obj_list))) {
     cell_id_prefix <- names(obj_list)
   }
 
-  # same normalization approach was applied to all objects,
-  # so we merge data slot too.
   obj_merged <- merge(
     x = obj_list[[1]],
     y = obj_list[-1],
-    merge.data = TRUE,
     add.cell.ids = cell_id_prefix
   )
 
+  if (analyze)
+    obj_merged <- merge_analysis(obj_merged, normalization = normalization)
+
   obj_merged
+}
+
+merge_analysis <- function(
+  object, n_dims = 20, cluster_res = 0.5, normalization = "LogNormalize"
+) {
+
+  if (normalization == "SCTransform") {
+    object <- Seurat::SCTransform(
+      object, do.scale = FALSE)
+  } else {
+    object <- Seurat::NormalizeData(
+      object, normalization.method = normalization)
+  }
+
+  object <- Seurat::FindVariableFeatures(
+      object, selection.method = "vst", nfeatures = 2000)
+
+  # Run the standard workflow for visualization and clustering
+  object <- Seurat::ScaleData(object)
+  object <- Seurat::RunPCA(object)
+
+  object <- Seurat::RunUMAP(object, dims = 1:n_dims)
+
+  #TODO: Check duplicates manually
+  # Workaround: https://github.com/satijalab/seurat/issues/167
+  object <- Seurat::RunTSNE(
+    object, dims = 1:n_dims, check_duplicates = FALSE)
+
+  object <- Seurat::FindNeighbors(object, dims = 1:n_dims)
+  object <- Seurat::FindClusters(object, resolution = cluster_res)
+
+  object
 }
 
 #' Perform Seurat integrated analysis for grouped samples
