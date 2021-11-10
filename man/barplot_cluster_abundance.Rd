@@ -32,9 +32,8 @@ cell metadata (\code{colData}) columns have to be provided:
 \item{\code{group_id}}{experimental group/condition}
 }}
 
-\item{srt}{Seurat object after integrated analysis.
-The \code{sample} and \code{group} infromation must exist in
-\code{seurat_object@meta.data} slot.}
+\item{srt}{Seurat object. The \code{sample} and \code{group} infromation
+must exist in \code{seurat_object@meta.data} slot.}
 }
 \value{
 A ggplot2 object

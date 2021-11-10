@@ -390,15 +390,13 @@ barplot_cluster_abundance.SingleCellExperiment <- function(sce) {
 #' Seurat object.
 #' @method barplot_cluster_abundance Seurat
 #'
-#' @param srt Seurat object after integrated analysis.
-#' The \code{sample} and \code{group} infromation must exist in
-#' \code{seurat_object@meta.data} slot.
+#' @param srt Seurat object. The \code{sample} and \code{group} infromation
+#' must exist in \code{seurat_object@meta.data} slot.
 #'
 #' @export
 barplot_cluster_abundance.Seurat <- function(srt) {
   stopifnot(
     inherits(srt, "Seurat"),
-    Seurat::DefaultAssay(srt) == "integrated",
     !is.null(srt@meta.data$sample),
     !is.null(srt@meta.data$group)
   )
