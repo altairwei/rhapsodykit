@@ -1,4 +1,4 @@
-ggplot2::theme_set(cowplot::theme_cowplot())
+#ggplot2::theme_set(cowplot::theme_cowplot())
 
 gg_color_hue <- function(n) {
   hues <- seq(15, 375, length = n + 1)
@@ -318,4 +318,94 @@ genecount_diff_state <- function(
     p <- p + ggplot2::scale_x_discrete(limits = names(results$data))
 
   p
+}
+
+#' Plot Abundance Comparison Across Sample Clusters
+#'
+#' @export
+barplot_cluster_abundance <- function(x) {
+  UseMethod("barplot_cluster_abundance")
+}
+
+calculate_cluster_proportion <- function(clusters, samples, groups) {
+  cluster_prop <- prop.table(table(clusters, samples), 2)
+  df <- reshape2::melt(
+    cluster_prop,
+    varnames = c("cluster_id", "sample_id"),
+    value.name = "frequency",
+    as.is = TRUE
+  )
+
+  df$cluster_id <- factor(type.convert(df$cluster_id))
+  df$group_id <- groups[match(df$sample_id, samples)]
+
+  df
+}
+
+#' @describeIn barplot_cluster_abundance Plot Abundance Comparison Across Sample
+#' Clusters for data.frame
+#' @method barplot_cluster_abundance data.frame
+#' @param df Data frame to plot, must contains columns:
+#' \describe{
+#'   \item{\code{frequency}}{the proportion of cells in a cluster in a sample}
+#'   \item{\code{sample_id}}{IDs of samples}
+#'   \item{\code{cluster_id}}{IDs of clusters}
+#'   \item{\code{group_id}}{IDs of sample groups}
+#' }
+#'
+#' @return A ggplot2 object
+#' @export
+barplot_cluster_abundance.data.frame <- function(df) {
+  df %>%
+    ggplot2::ggplot(ggplot2::aes(
+      x = sample_id, y = frequency, fill = cluster_id)) +
+    ggplot2::scale_y_continuous(breaks = seq(0, 1, 0.2), expand = c(0, 0)) +
+    ggplot2::facet_wrap(~group_id, ncol = 1, scales = "free_y") +
+    ggplot2::geom_bar(
+      stat = "identity", col = "white",  width = 1, size = 0.2) +
+    ggplot2::scale_x_discrete(expand = c(0, 0)) +
+    ggplot2::coord_flip() +
+    ggplot2::theme(
+      aspect.ratio = NULL,
+      panel.grid = ggplot2::element_blank(),
+      panel.spacing = grid::unit(1, "mm"),
+      strip.text = ggplot2::element_blank(),
+      strip.background = ggplot2::element_blank()
+    )
+}
+
+#' @describeIn barplot_cluster_abundance Plot Abundance Comparison Across Sample
+#' Clusters for SingleCellExperiment
+#' @inheritParams calculate_pseudo_bulk
+#' @method barplot_cluster_abundance SingleCellExperiment
+#' @export
+barplot_cluster_abundance.SingleCellExperiment <- function(sce) {
+  df <- calculate_cluster_proportion(
+    sce$cluster_id, sce$sample_id, sce$group_id)
+
+  barplot_cluster_abundance(df)
+}
+
+#' @describeIn barplot_cluster_abundance Calculate the proportion of cells from
+#' Seurat object.
+#' @method barplot_cluster_abundance Seurat
+#'
+#' @param srt Seurat object after integrated analysis.
+#' The \code{sample} and \code{group} infromation must exist in
+#' \code{seurat_object@meta.data} slot.
+#'
+#' @export
+barplot_cluster_abundance.Seurat <- function(srt) {
+  stopifnot(
+    inherits(srt, "Seurat"),
+    Seurat::DefaultAssay(srt) == "integrated",
+    !is.null(srt@meta.data$sample),
+    !is.null(srt@meta.data$group)
+  )
+
+  srt_df <- SeuratObject::FetchData(srt, c("ident", "sample", "group"))
+  df <- calculate_cluster_proportion(
+    srt_df$ident, srt_df$sample, srt_df$group)
+
+  barplot_cluster_abundance(df)
 }

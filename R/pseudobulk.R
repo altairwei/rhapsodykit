@@ -96,7 +96,7 @@ aggregate_by_ident <- function(object, features, stat_fun = mean) {
 #' Prepare SingleCellExperiment object for muscat package.
 #'
 #' @param seurat_object Seurat object after integrated analysis.
-#' The \code{sample} and \code{group} infromation must exist in 
+#' The \code{sample} and \code{group} infromation must exist in
 #' \code{seurat_object@meta.data} slot.
 #' @param sample_make_names Apply \code{make.names} on \code{sample}.
 #' @param group_make_names Apply \code{make.names} on \code{group}
