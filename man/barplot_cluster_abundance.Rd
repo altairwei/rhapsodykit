@@ -7,13 +7,13 @@
 \alias{barplot_cluster_abundance.Seurat}
 \title{Plot Abundance Comparison Across Sample Clusters}
 \usage{
-barplot_cluster_abundance(x)
+barplot_cluster_abundance(x, ...)
 
-\method{barplot_cluster_abundance}{data.frame}(df)
+\method{barplot_cluster_abundance}{data.frame}(df, position = c("stack", "dodge"))
 
-\method{barplot_cluster_abundance}{SingleCellExperiment}(sce)
+\method{barplot_cluster_abundance}{SingleCellExperiment}(sce, ...)
 
-\method{barplot_cluster_abundance}{Seurat}(srt)
+\method{barplot_cluster_abundance}{Seurat}(srt, ...)
 }
 \arguments{
 \item{df}{Data frame to plot, must contains columns:
@@ -23,6 +23,8 @@ barplot_cluster_abundance(x)
 \item{\code{cluster_id}}{IDs of clusters}
 \item{\code{group_id}}{IDs of sample groups}
 }}
+
+\item{position}{Specify the way to display the bar chart}
 
 \item{sce}{A SingleCellExperiment object. The following
 cell metadata (\code{colData}) columns have to be provided:
@@ -43,11 +45,11 @@ Plot Abundance Comparison Across Sample Clusters
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{data.frame}: Plot Abundance Comparison Across Sample
-Clusters for data.frame
+\item \code{data.frame}: Plot abundance comparison across
+sample clusters from a formatted data.frame
 
-\item \code{SingleCellExperiment}: Plot Abundance Comparison Across Sample
-Clusters for SingleCellExperiment
+\item \code{SingleCellExperiment}: Calculate the proportion of cells from
+object SingleCellExperiment
 
 \item \code{Seurat}: Calculate the proportion of cells from
 Seurat object.
