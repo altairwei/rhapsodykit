@@ -336,7 +336,7 @@ calculate_cluster_proportion <- function(clusters, samples, groups) {
     as.is = TRUE
   )
 
-  df$cluster_id <- factor(type.convert(df$cluster_id))
+  #df$cluster_id <- factor(type.convert(df$cluster_id))
   df$group_id <- groups[match(df$sample_id, samples)]
 
   df
