@@ -1,6 +1,6 @@
 Package: rhapsodykit
 Title: A Set of Tools for BD Rhapsody WTA Downstream Analysis
-Version: 0.0.0.9008
+Version: 0.0.0.9009
 Authors@R: 
     person(given = "Altair",
            family = "Wei",

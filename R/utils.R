@@ -26,6 +26,7 @@ find_file <- function(base_folder, glob) {
 #' @param dict A named character defined mapping rule.
 #'
 #' @return A character vector.
+#' @export
 key_mapping <- function(x, dict) {
   stopifnot(is.character(dict), !is.null(names(dict)))
 
