@@ -16,6 +16,8 @@ barplot_cluster_abundance(x, ...)
 \method{barplot_cluster_abundance}{Seurat}(srt, ...)
 }
 \arguments{
+\item{...}{Args passed to \code{muscat::aggregateData}}
+
 \item{df}{Data frame to plot, must contains columns:
 \describe{
 \item{\code{frequency}}{the proportion of cells in a cluster in a sample}

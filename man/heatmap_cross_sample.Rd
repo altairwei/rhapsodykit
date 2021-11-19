@@ -70,6 +70,8 @@ heatmap_cross_sample(
 \item{groups}{Group infromation.}
 
 \item{type}{Value type of pseudo-bulk data.}
+
+\item{...}{Args passed to \code{muscat::aggregateData}}
 }
 \description{
 Plot heatmap across samples.

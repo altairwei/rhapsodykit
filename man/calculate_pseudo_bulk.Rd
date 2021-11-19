@@ -6,7 +6,8 @@
 \usage{
 calculate_pseudo_bulk(
   sce,
-  type = c("counts", "logcounts", "cpm", "vstresiduals")
+  type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  ...
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ cell metadata (\code{colData}) columns have to be provided:
 }}
 
 \item{type}{Value type of pseudo-bulk data.}
+
+\item{...}{Args passed to \code{muscat::aggregateData}}
 }
 \value{
 A SingleCellExperiment object.

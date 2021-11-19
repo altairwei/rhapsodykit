@@ -140,10 +140,13 @@ prepare_muscat_sce <- function(
 #'   \item{\code{group_id}}{experimental group/condition}
 #' }
 #' @param type Value type of pseudo-bulk data.
+#' @param ... Args passed to \code{muscat::aggregateData}
 #' @return A SingleCellExperiment object.
 #' @export
 calculate_pseudo_bulk <- function(sce,
-  type = c("counts", "logcounts", "cpm", "vstresiduals")) {
+  type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  ...
+) {
   stopifnot(
     inherits(sce, "SingleCellExperiment"),
     all(c("cluster_id", "sample_id", "group_id") %in% names(sce@colData))
@@ -190,7 +193,7 @@ calculate_pseudo_bulk <- function(sce,
 
   scale <- switch(type, cpm = TRUE, FALSE)
 
-  pb <- muscat::aggregateData(sce, type, fun = fun, scale = scale)
+  pb <- muscat::aggregateData(sce, type, fun = fun, scale = scale, ...)
 
   pb
 }
