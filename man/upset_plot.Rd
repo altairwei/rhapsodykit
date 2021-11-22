@@ -7,7 +7,6 @@
 upset_plot(
   df,
   n_intersections = 15,
-  x_expansion = ggplot2::expansion(c(0, 0), c(0.8, 0.8)),
   y_expansion = ggplot2::expansion(c(0, 0.1), c(0, 0)),
   plot_margin = ggplot2::margin(0.5, 0.5, 0.5, 1.5, unit = "cm"),
   ...
@@ -17,8 +16,6 @@ upset_plot(
 \item{df}{A data.frame produced from \code{upset_dataframe}}
 
 \item{n_intersections}{How many intersections to show.}
-
-\item{x_expansion}{Expansion for x-axis, see \code{\link[ggplot2]{expansion}}}
 
 \item{y_expansion}{Expansion for y-axis, see \code{\link[ggplot2]{expansion}}}
 

@@ -38,6 +38,8 @@ then integrated through pairwise integration. Each query is then mapped to
 the integrated reference.}
 
 \item{normalization}{Normalization method.}
+
+\item{...}{pass to \code{\link[Seurat]{FindIntegrationAnchors}}}
 }
 \value{
 Returns an \code{AnchorSet} object that can be used as input

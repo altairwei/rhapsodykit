@@ -363,7 +363,7 @@ integrated_sample_analysis <- function(
 #' @param obj_list A list of Seurat objects.
 #' @param n_dims Number of dimensions to use as input.
 #' @param normalization Normalization method.
-#' @param ... pass to \code{\link[Seurat]{FindIntegrationAnchors}
+#' @param ... pass to \code{\link[Seurat]{FindIntegrationAnchors}}
 #' @inheritParams Seurat::FindIntegrationAnchors
 #' @return Returns an \code{AnchorSet} object that can be used as input
 #'  to \code{\link[Seurat]{IntegrateData}}.

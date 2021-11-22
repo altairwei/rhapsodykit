@@ -21,8 +21,6 @@ upset_updown_regulated(
 
 \item{n_intersections}{How many intersections to show.}
 
-\item{x_expansion}{Expansion for x-axis, see \code{\link[ggplot2]{expansion}}}
-
 \item{y_expansion}{Expansion for y-axis, see \code{\link[ggplot2]{expansion}}}
 
 \item{plot_margin}{margin around entire plot (unit with the sizes of the top,

@@ -11,10 +11,10 @@ save_plot(filename, plot, width = 7, height = 7, ...)
 
 \item{plot}{Plot to save, defaults to last plot displayed.}
 
-\item{width}{Plot size in \code{units} ("in", "cm", or "mm").
+\item{width}{Plot size in \code{units} ("in", "cm", "mm", or "px").
 If not supplied, uses the size of current graphics device.}
 
-\item{height}{Plot size in \code{units} ("in", "cm", or "mm").
+\item{height}{Plot size in \code{units} ("in", "cm", "mm", or "px").
 If not supplied, uses the size of current graphics device.}
 
 \item{...}{Other arguments passed on to the graphics device function,

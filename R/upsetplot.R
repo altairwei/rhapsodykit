@@ -37,11 +37,38 @@ upset_dataframe <- function(bin) {
     dplyr::summarize(clusters = list(cluster))
 }
 
+plot_axis_combmatrix <- function(df) {
+  ggplot2::ggplot(df, ggplot2::aes(x = at, y = single_label)) +
+    ggplot2::geom_rect(ggplot2::aes(
+      fill = index %% 2 == 0),
+      ymin = df$index - 0.5, ymax = df$index + 0.5, xmin = 0, xmax = 1) +
+    ggplot2::geom_point(ggplot2::aes(color = observed), size = 3) +
+    ggplot2::geom_line(
+      data = function(dat) dat[dat$observed, , drop = FALSE],
+      ggplot2::aes(group = labels), size = 1.2) +
+    ggplot2::ylab("") + ggplot2::xlab("") +
+    ggplot2::scale_x_continuous(limits = c(0, 1), expand = c(0, 0)) +
+    ggplot2::scale_fill_manual(
+      values = c(`TRUE` = "white", `FALSE` = "#F7F7F7")) +
+    ggplot2::scale_color_manual(
+      values = c(`TRUE` = "black", `FALSE` = "#E0E0E0")) +
+    ggplot2::guides(color = "none", fill = "none") +
+    ggplot2::theme(
+      panel.background = ggplot2::element_blank(),
+      axis.text.x = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank(),
+      axis.ticks.length = ggplot2::unit(0, "pt"),
+      axis.title.y = ggplot2::element_blank(),
+      axis.title.x = ggplot2::element_blank(),
+      axis.line = ggplot2::element_blank(),
+      panel.border = ggplot2::element_blank()
+    )
+}
+
 #' Plot UpSet diagram from tidy UpSet data.frame
 #'
 #' @param df A data.frame produced from \code{upset_dataframe}
 #' @param n_intersections How many intersections to show.
-#' @param x_expansion Expansion for x-axis, see \code{\link[ggplot2]{expansion}}
 #' @param y_expansion Expansion for y-axis, see \code{\link[ggplot2]{expansion}}
 #' @param plot_margin margin around entire plot (unit with the sizes of the top,
 #'  right, bottom, and left margins)
@@ -50,7 +77,6 @@ upset_dataframe <- function(bin) {
 upset_plot <- function(
   df,
   n_intersections = 15,
-  x_expansion = ggplot2::expansion(c(0, 0), c(0.8, 0.8)),
   y_expansion = ggplot2::expansion(c(0, 0.1), c(0, 0)),
   plot_margin = ggplot2::margin(0.5, 0.5, 0.5, 1.5, unit = "cm"),
   ...
@@ -66,8 +92,17 @@ upset_plot <- function(
       n_intersections = n_intersections,
       ...) +
     ggplot2::scale_y_continuous(expand = y_expansion) +
-    ggplot2::theme_classic() +
-    ggplot2::theme(plot.margin = plot_margin)
+    ggplot2::theme(
+      panel.background = ggplot2::element_blank(),
+      panel.border = ggplot2::element_blank(),
+      panel.grid.major = ggplot2::element_blank(),
+      panel.grid.minor = ggplot2::element_blank(),
+      axis.line = ggplot2::element_line(
+        colour = "black", size = ggplot2::rel(1)),
+      legend.key = ggplot2::element_blank(), 
+      strip.background = ggplot2::element_rect(
+        fill = "white", colour = "black", size = ggplot2::rel(2))
+    )
 
   main_plot
 }
