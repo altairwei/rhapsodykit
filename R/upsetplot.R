@@ -88,7 +88,6 @@ upset_plot <- function(
       stat = "count", size = 2, vjust = -1,
       mapping = ggplot2::aes(label = ggplot2::after_stat(count))) +
     ggupset::scale_x_upset(
-      expand = x_expansion,
       n_intersections = n_intersections,
       ...) +
     ggplot2::scale_y_continuous(expand = y_expansion) +
