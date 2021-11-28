@@ -246,3 +246,20 @@ diff_state_pull <- function(
     return(res)
   }
 }
+
+#' Subset Differential State Results
+#'
+#' @inheritParams diff_state_pull
+#' @export
+diff_state_subset <- function(results, contrasts = NULL, clusters = NULL) {
+  if (!is.null(contrasts))
+    results$table <- results$table[contrasts]
+
+  if (!is.null(clusters)) {
+    results$table <- purrr::map(results$table, function(contr) contr[clusters])
+    results$data <- results$data[clusters]
+    results$fit <- results$fit[clusters]
+  }
+
+  results
+}
