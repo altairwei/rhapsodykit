@@ -50,6 +50,8 @@ Imports:
     ggnewscale,
     UpSetR,
     ggupset
+Remotes:
+    mojaveazure/seurat-disk
 Suggests: 
     testthat
 biocViews: SingleCellWorkflow

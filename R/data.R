@@ -115,3 +115,27 @@ read_rhapsody_wta <- function(base_dir, use_mtx = FALSE) {
 
   expr_matrix
 }
+
+#' This function can be used to save single-cell data object to
+#' disk file.
+#'
+#' @docType methods
+#' @name save_to_disk
+#' @rdname save_to_disk
+#' @title Save Single-Cell Object to Disk
+#' @param obj single-cell data object
+#' @param filename output filename.
+#' @param ... additional parameters
+#' @export
+setGeneric("save_to_disk",
+  function(obj, filename, ...) standardGeneric("save_to_disk"))
+
+##' @rdname save_to_disk
+##' @exportMethod save_to_disk
+setMethod(
+  f = "save_to_disk",
+  signature = "Seurat",
+  definition = function(obj, filename, ...) {
+    SeuratDisk::SaveH5Seurat(obj, filename, overwrite = TRUE)
+  }
+)
