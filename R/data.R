@@ -130,12 +130,37 @@ read_rhapsody_wta <- function(base_dir, use_mtx = FALSE) {
 setGeneric("save_to_disk",
   function(obj, filename, ...) standardGeneric("save_to_disk"))
 
-##' @rdname save_to_disk
-##' @exportMethod save_to_disk
+#' @rdname save_to_disk
+#' @exportMethod save_to_disk
+#' @importClassesFrom SeuratObject Seurat
 setMethod(
   f = "save_to_disk",
   signature = "Seurat",
   definition = function(obj, filename, ...) {
     SeuratDisk::SaveH5Seurat(obj, filename, overwrite = TRUE)
+  }
+)
+
+#' @title Access Cellular Data from SeuratDisk File
+#'
+#' Retrieves data (feature expression, PCA scores, metrics, etc.) for a set
+#' of cells in a SeuratDisk file.
+#'
+#' @docType methods
+#' @name fetch_data
+#' @rdname fetch_data
+#' @param filename h5Seurat filename
+#' @param ... additional parameters
+#' @export
+setGeneric("fetch_data",
+  function(filename, ...) standardGeneric("fetch_data"))
+
+#' @rdname fetch_data
+#' @exportMethod fetch_data
+setMethod(
+  f = "fetch_data",
+  signature = "character",
+  definition = function(filename, ...) {
+    hfile <- SeuratDisk::Connect(filename)
   }
 )
