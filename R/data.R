@@ -116,51 +116,50 @@ read_rhapsody_wta <- function(base_dir, use_mtx = FALSE) {
   expr_matrix
 }
 
+#' Save Single-Cell Object to Disk
+#'
 #' This function can be used to save single-cell data object to
 #' disk file.
 #'
-#' @docType methods
-#' @name save_to_disk
-#' @rdname save_to_disk
-#' @title Save Single-Cell Object to Disk
 #' @param obj single-cell data object
 #' @param filename output filename.
 #' @param ... additional parameters
 #' @export
-setGeneric("save_to_disk",
-  function(obj, filename, ...) standardGeneric("save_to_disk"))
+save_to_disk <- function(obj, filename, ...) {
+  UseMethod("save_to_disk")
+}
 
-#' @rdname save_to_disk
-#' @exportMethod save_to_disk
-#' @importClassesFrom SeuratObject Seurat
-setMethod(
-  f = "save_to_disk",
-  signature = "Seurat",
-  definition = function(obj, filename, ...) {
-    SeuratDisk::SaveH5Seurat(obj, filename, overwrite = TRUE)
-  }
-)
+#' @describeIn save_to_disk Save Seurat Object to Disk
+#' @method save_to_disk Seurat
+#' @export
+save_to_disk.Seurat <- function(obj, filename, ...) {
+  SeuratDisk::SaveH5Seurat(obj, filename, overwrite = TRUE)
+}
 
-#' @title Access Cellular Data from SeuratDisk File
+#' Access Cellular Data from SeuratDisk File
 #'
 #' Retrieves data (feature expression, PCA scores, metrics, etc.) for a set
 #' of cells in a SeuratDisk file.
 #'
-#' @docType methods
-#' @name fetch_data
-#' @rdname fetch_data
-#' @param filename h5Seurat filename
+#' @param obj h5Seurat filename or connection
 #' @param ... additional parameters
 #' @export
-setGeneric("fetch_data",
-  function(filename, ...) standardGeneric("fetch_data"))
+fetch_data <- function(obj, ...) {
+  UseMethod("fetch_data")
+}
 
-#' @rdname fetch_data
-#' @exportMethod fetch_data
-setMethod(
-  f = "fetch_data",
-  signature = "character",
-  definition = function(filename, ...) {
-    hfile <- SeuratDisk::Connect(filename)
-  }
-)
+#' @describeIn fetch_data Access data from filename.
+#' @method fetch_data character
+#' @export
+fetch_data.character <- function(obj, ...) {
+  hfile <- SeuratDisk::Connect("anterior1.h5Seurat")
+  fetch_data(hfile, ...)
+  hfile$close_all()
+}
+
+#' @describeIn fetch_data Access data from h5Seurat connection.
+#' @method fetch_data h5Seurat
+#' @export
+fetch_data.h5Seurat <- function(obj, ...) {
+
+}
