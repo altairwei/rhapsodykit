@@ -92,6 +92,45 @@ diff_state_significant <- function(
     diff_state_apply(dplyr::arrange, p_adj.loc)
 }
 
+#' Prepare significant logFC vector named with gene names.
+#'
+#' @param ds Results returned by \code{\link[muscat]{pbDS}} or
+#'  \code{\link{pseudobulk_diff_state}}
+#' @inheritParams diff_state_pull
+#' @param FDR Upper limit of FDR.
+#' @param logFC Lower limit of absolute value of logFC.
+#' @return A logFC vector named gene names
+#' @export
+diff_state_significant_lfc <- function(
+  ds, contrasts, clusters, FDR = 0.05, logFC = 1) {
+  df <- ds %>%
+      diff_state_significant(FDR, logFC) %>%
+      diff_state_pull(contrasts, clusters, c("gene", "logFC"))
+
+  fc_list <- df[, "logFC"]
+  names(fc_list) <- as.character(df[, "gene"])
+
+  fc_list
+}
+
+#' Prepare ranked logFC vector named with gene names.
+#'
+#' @inheritParams diff_state_significant_lfc
+#' @return A ranked logFC vector named gene names
+#' @export
+diff_state_ranked_lfc <- function(ds, contrasts, clusters) {
+  df <-  ds %>%
+    # We don't need to filter genes with given cutoff
+    diff_state_pull(contrasts, clusters, c("gene", "logFC"))
+
+  fc_list <- df[, "logFC"]
+  names(fc_list) <- as.character(df[, "gene"])
+
+  ranked_list <- sort(fc_list, decreasing = TRUE)
+
+  ranked_list
+}
+
 #' Filter differential state analysis results.
 #'
 #' @inheritParams diff_state_apply
