@@ -4,10 +4,12 @@
 \alias{find_all_conserved_markers}
 \title{Find conserved markers for all cell identity classes}
 \usage{
-find_all_conserved_markers(object)
+find_all_conserved_markers(object, grouping.var = "sample", ...)
 }
 \arguments{
 \item{object}{A Seurat object.}
+
+\item{...}{arguments passed to \code{\link[Seurat]{FindConservedMarkers}}.}
 }
 \value{
 A data.frame containing conserved markers.

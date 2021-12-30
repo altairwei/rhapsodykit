@@ -449,16 +449,17 @@ integration_analysis <- function(
 #' Find conserved markers for all cell identity classes
 #'
 #' @param object A Seurat object.
+#' @param ... arguments passed to \code{\link[Seurat]{FindConservedMarkers}}.
 #' @return A data.frame containing conserved markers.
 #'
 #' @export
-find_all_conserved_markers <- function(object) {
+find_all_conserved_markers <- function(object, grouping.var = "sample", ...) {
   Seurat::DefaultAssay(object) <- "RNA"
   idents_all <- sort(unique(Seurat::Idents(object)))
   df_list <- lapply(idents_all, function(i) {
     df <- tryCatch(
       Seurat::FindConservedMarkers(
-        object, ident.1 = i, grouping.var = "sample"),
+        object, ident.1 = i, grouping.var = grouping.var, ...),
       error = function(e) {
         message(toString(e))
         NULL
