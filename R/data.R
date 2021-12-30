@@ -141,25 +141,33 @@ save_to_disk.Seurat <- function(obj, filename, ...) {
 #' Retrieves data (feature expression, PCA scores, metrics, etc.) for a set
 #' of cells in a SeuratDisk file.
 #'
-#' @param obj h5Seurat filename or connection
+#' @param x h5Seurat filename or connection.
+#' @param vars List of all variables to fetch.
+#' @param cells Cells to collect data for (default is all cells)
+#' @param slot Slot to pull feature data for
+#'
+#' @return A data frame with cells as rows and cellular data as columns
+#'
 #' @param ... additional parameters
 #' @export
-fetch_data <- function(obj, ...) {
-  UseMethod("fetch_data")
+fetch_cellular_data <- function(x, vars, cells = NULL, slot = "data", ...) {
+  UseMethod("fetch_cellular_data")
 }
 
-#' @describeIn fetch_data Access data from filename.
-#' @method fetch_data character
+#' @describeIn fetch_cellular_data Access data from filename.
+#' @method fetch_cellular_data character
 #' @export
-fetch_data.character <- function(obj, ...) {
-  hfile <- SeuratDisk::Connect("anterior1.h5Seurat")
-  fetch_data(hfile, ...)
+fetch_cellular_data.character <- function(
+  x, vars, cells = NULL, slot = "data", ...
+) {
+  hfile <- SeuratDisk::Connect(x)
+  fetch_cellular_data(hfile, ...)
   hfile$close_all()
 }
 
-#' @describeIn fetch_data Access data from h5Seurat connection.
-#' @method fetch_data h5Seurat
+#' @describeIn fetch_cellular_data Access data from h5Seurat connection.
+#' @method fetch_cellular_data h5Seurat
 #' @export
-fetch_data.h5Seurat <- function(obj, ...) {
+fetch_cellular_data.h5Seurat <- function(x, vars, ...) {
 
 }
