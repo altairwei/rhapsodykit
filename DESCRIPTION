@@ -50,9 +50,9 @@ Imports:
     ggnewscale,
     UpSetR,
     ggupset,
-    SeuratDisk
-Remotes:
-    mojaveazure/seurat-disk
+    SeuratDisk (>= 0.0.0.9019)
+Remotes: 
+    github::altairwei/seurat-disk@fetch-data
 Suggests: 
     testthat
 biocViews: SingleCellWorkflow

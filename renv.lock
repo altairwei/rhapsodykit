@@ -371,6 +371,19 @@
       "Repository": "CRAN",
       "Hash": "908d4e60072ef2c9df77c43b19caa2ba"
     },
+    "SeuratDisk": {
+      "Package": "SeuratDisk",
+      "Version": "0.0.0.9019",
+      "Source": "GitHub",
+      "Remotes": "satijalab/seurat-data",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "seurat-disk",
+      "RemoteUsername": "altairwei",
+      "RemoteRef": "fetch-data",
+      "RemoteSha": "a80cca52d523cb0102049bed9489bba7a390f365",
+      "Hash": "faca5c93295701e381764986cdb5ca00"
+    },
     "SeuratObject": {
       "Package": "SeuratObject",
       "Version": "4.0.3",
@@ -1049,8 +1062,9 @@
       "Package": "ggtree",
       "Version": "3.2.1",
       "Source": "Bioconductor",
+      "RemoteType": "bioconductor",
       "Remotes": "GuangchuangYu/treeio",
-      "Hash": "f156c85173024c88e2fdfd63ccca3fd7"
+      "Hash": "c06d1d4b6b9c6be846276d74ff8c1596"
     },
     "ggupset": {
       "Package": "ggupset",
@@ -1154,6 +1168,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "2ace6c4a06297d0b364e0444384a2b82"
+    },
+    "hdf5r": {
+      "Package": "hdf5r",
+      "Version": "1.3.5",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "0870af1f511f6d6d1230e71856801f86"
     },
     "here": {
       "Package": "here",

@@ -10,8 +10,9 @@ expression_projection_page_ui <- function(id) {
         ),
         shiny::radioButtons(
           inputId = ns("reduction"),
-          label = "Reduction",
-          choices = c("tsne", "umap", "pca"),
+          label = "Dimension Reduction",
+          choiceValues = c("umap", "tsne", "pca"),
+          choiceNames = c("UMAP", "t-SNE", "PCA"),
           inline = TRUE
         ),
         shiny::textAreaInput(
@@ -46,20 +47,88 @@ expression_projection_page <- function(
     choices = basename(names(library_list)),
   )
 
+  cell_embeddings <- shiny::reactive({
+    shiny::req(input$select_sample)
+    library <- input$select_sample
+
+    waiter::waiter_show(html = tagList(
+      waiter::spin_flower(),
+      htmltools::h4("Loading Cell Embeddings...")
+    ))
+    on.exit(waiter::waiter_hide(), add = TRUE)
+
+    hfile <- SeuratDisk::Connect(library_list[[library]]$Seurat_Disk)
+    on.exit(hfile$close_all(), add = TRUE)
+
+    embeddings <- SeuratDisk::FetchCellData(
+      object = hfile,
+      vars = c(
+        "PC_1", "PC_2",
+        "tSNE_1", "tSNE_2",
+        "UMAP_1", "UMAP_2",
+        "ident"
+      )
+    )
+
+    embeddings
+  })
+
   gene_queries <- shiny::eventReactive(input$submit, {
     gene_list <- strsplit(input$gene_list, "\n")[[1]]
-    gene_list
+    unique(gene_list)
+  })
+
+  gene_expressions <- shiny::eventReactive(input$submit, {
+    shiny::req(input$select_sample)
+    library <- input$select_sample
+
+    waiter::waiter_show(html = tagList(
+      waiter::spin_flower(),
+      htmltools::h4("Loading Gene Expressions...")
+    ))
+    on.exit(waiter::waiter_hide(), add = TRUE)
+
+    hfile <- SeuratDisk::Connect(library_list[[library]]$Seurat_Disk)
+    on.exit(hfile$close_all(), add = TRUE)
+
+    genes <- gene_queries()
+
+    expressions <- SeuratDisk::FetchCellData(
+      hfile, vars = paste0("rna_", genes))
+
+    expressions
+  })
+
+  data_to_plot <- shiny::reactive({
+    reduction <- input$reduction
+    dim_names <- paste0(
+      switch(reduction,
+        tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
+      1:2
+    )
+    cbind(cell_embeddings()[, c(dim_names, "ident")], gene_expressions())
   })
 
   output$dimplot <- shiny::renderPlot({
-    shiny::req(input$submit)
-    shiny::req(input$select_sample)
+    dim_names <- paste0(
+      switch(input$reduction,
+        tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
+      1:2
+    )
 
-    library <- input$select_sample
-    reduction <- input$reduction
-    obj <- cache[[library]]$Seurat_Object()
+    data_to_plot <- cell_embeddings()[, c(dim_names, "ident")]
 
-    Seurat::DimPlot(obj, reduction = reduction)
+    ggplot2::ggplot(
+        data = data_to_plot,
+        mapping = ggplot2::aes_string(
+          x = dim_names[1], y = dim_names[2], color = "ident")) +
+      ggplot2::geom_point(size = 1) +
+      ggplot2::scale_color_manual(
+        values = Seurat::DiscretePalette(length(levels(data_to_plot$ident)))) +
+      ggplot2::coord_fixed() +
+      ggplot2::guides(color = ggplot2::guide_legend(
+        override.aes = list(size = 3))) +
+      cowplot::theme_cowplot()
   })
 
   # Dynamically render plotOutput that user need.
@@ -98,15 +167,46 @@ expression_projection_page <- function(
 
     library <- shiny::isolate(input$select_sample)
     reduction <- shiny::isolate(input$reduction)
-    obj <- cache[[library]]$Seurat_Object()
-    Seurat::DefaultAssay(obj) <- "RNA"
 
     invisible(lapply(plot_output_id_list, function(gene_id) {
       output[[paste0("scatter-", gene_id)]] <- shiny::renderPlot({
-        Seurat::FeaturePlot(obj, features = gene_id, reduction = reduction)
+        data_to_plot <- data_to_plot()
+        gene_id_p <- paste0("rna_", gene_id)
+        dim_names <- names(data_to_plot)[1:2]
+        if (gene_id_p %in% names(data_to_plot)) {
+          data_to_plot %>%
+            dplyr::arrange(.data[[gene_id_p]]) %>%
+            ggplot2::ggplot(
+                mapping = ggplot2::aes_string(
+                  x = dim_names[1], y = dim_names[2], color = gene_id_p)) +
+              ggplot2::geom_point(size = .2) +
+              ggplot2::scale_colour_gradient(low = "lightgrey", high = "blue") +
+              ggplot2::ggtitle(gene_id_p) +
+              ggplot2::coord_fixed() +
+              cowplot::theme_cowplot() +
+              ggplot2::theme(
+                plot.title = ggplot2::element_text(hjust = 0.5),
+                legend.title = ggplot2::element_blank()
+              )
+        } else {
+          plot_placeholder("Not Found")
+        }
       })
       output[[paste0("violin-", gene_id)]] <- shiny::renderPlot({
-        Seurat::VlnPlot(obj, features = gene_id)
+        gene_id_p <- paste0("rna_", gene_id)
+        data_to_plot <- data_to_plot()
+        if (gene_id_p %in% names(data_to_plot)) {
+          p <- Seurat:::SingleExIPlot(
+            type = "violin",
+            data = data_to_plot[, gene_id_p, drop = FALSE],
+            idents = data_to_plot$ident,
+            adjust = 1,
+            pt.size = 1
+          )
+          p + ggplot2::guides(fill = "none")
+        } else {
+          plot_placeholder("Not Found")
+        }
       })
     }))
   })

@@ -54,13 +54,12 @@ search_data <- function(raw_result_folders, base_folder) {
   libs
 }
 
-search_integrated_data <- function(raw_result_folders, base_folder) {
-  raw_result_folders <- file.path(base_folder, raw_result_folders)
-  names(raw_result_folders) <- raw_result_folders
-  libs <- raw_result_folders %>%
-    lapply(function(lib_dir) {
+search_integrated_data <- function(librarys, base_folder) {
+  libs <- librarys %>%
+    lapply(function(lib) {
       list(
-        Seurat_Object = find_file(lib_dir, "Seurat_Object_Combined.rds")
+        Seurat_Object = file.path(base_folder, lib[["rds"]]),
+        Seurat_Disk = file.path(base_folder, lib[["h5seurat"]])
       )
     })
 
