@@ -381,8 +381,8 @@
       "RemoteRepo": "seurat-disk",
       "RemoteUsername": "altairwei",
       "RemoteRef": "fetch-data",
-      "RemoteSha": "a80cca52d523cb0102049bed9489bba7a390f365",
-      "Hash": "faca5c93295701e381764986cdb5ca00"
+      "RemoteSha": "46982e71e568145518c5b37567589e9b48a20d17",
+      "Hash": "1acbf4f367c3ef9aef68a9ff9140ef61"
     },
     "SeuratObject": {
       "Package": "SeuratObject",

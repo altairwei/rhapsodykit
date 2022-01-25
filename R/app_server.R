@@ -14,37 +14,21 @@ main_server <- function(input, output, session) {
 
   library_list <- c(integrated_list)
   # A list of R object cache for each library
-  cache <- NULL
-  # cache <- lapply(library_list, function(results_list) {
-  #   purrr::imap(results_list, function(filename, key) {
-  #     method_to_load <- switch(key,
-  #       Expression_Data = load_expression_data,
-  #       Seurat_Object = readRDS,
-  #       Seurat_Disk = SeuratDisk::Connect,
-  #       function(x) NULL
-  #     )
-
-  #     shiny::reactive({
-  #       waiter::waiter_show(html = tagList(
-  #         waiter::spin_flower(),
-  #         htmltools::h4(paste0("Reading ", basename(filename)))
-  #       ))
-  #       on.exit(waiter::waiter_hide(), add = TRUE)
-  #       method_to_load(filename)
-  #     })
-  #   })
-  # })
+  cache <- shiny::reactiveValues(
+    cell_embeddings = NULL,
+    gene_expressions = NULL
+  )
 
   #shiny::callModule(
   #    metrics_summary_page, "metrics_summary_page", rv, cache)
   shiny::callModule(
       expression_projection_page, "expression_projection_page",
       library_list, cache)
-  #shiny::callModule(
-  #    subpopulation_heatmap_page, "subpopulation_heatmap_page",
-  #    library_list, cache)
-  #shiny::callModule(
-  #    ensembl_homologs_page, "ensembl_homologs_page")
+  shiny::callModule(
+     subpopulation_heatmap_page, "subpopulation_heatmap_page",
+     library_list, cache)
+  # shiny::callModule(
+  #     ensembl_homologs_page, "ensembl_homologs_page")
 
   waiter::waiter_hide()
 }

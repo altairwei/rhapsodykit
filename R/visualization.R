@@ -6,13 +6,14 @@ gg_color_hue <- function(n) {
 }
 
 plot_subpopulation_heatmap <- function(
-  aggregated, show_gene_name = TRUE) {
+  aggregated, show_gene_name = TRUE, ...) {
   stopifnot(is.matrix(aggregated))
 
   ComplexHeatmap::Heatmap(aggregated,
     row_names_side = "left",
     column_names_side = "top",
-    show_row_names = show_gene_name
+    show_row_names = show_gene_name,
+    ...
   )
 }
 

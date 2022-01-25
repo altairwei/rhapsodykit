@@ -13,7 +13,8 @@ subpopulation_heatmap_page_ui <- function(id) {
         shiny::radioButtons(
           inputId = ns("reduction"),
           label = "Reduction",
-          choices = c("tsne", "umap", "pca"),
+          choiceValues = c("umap", "tsne", "pca"),
+          choiceNames = c("UMAP", "t-SNE", "PCA"),
           inline = TRUE
         ),
         shiny::radioButtons(
@@ -87,7 +88,7 @@ subpopulation_heatmap_page <-  function(
   ####################
 
   gene_queries <- shiny::eventReactive(input$submit, {
-    gene_list <- strsplit(input$gene_list, "\n")[[1]]
+    gene_list <- strsplit(stringr::str_trim(input$gene_list), "\n")[[1]]
     unique(gene_list)
   })
 
@@ -110,15 +111,40 @@ subpopulation_heatmap_page <-  function(
     fun <- shiny::isolate(stat_fun())
 
     library <- shiny::isolate(input$select_sample)
-    obj <- cache[[library]]$Seurat_Object()
 
-    aggregated <- aggregate_by_ident(obj, gene_list, fun)
+    expression <- fetch_gene_expression(
+      library_list[[library]]$Seurat_Disk,
+      gene_list,
+      cache
+    )
 
-    # Convert data frame to matrix
-    aggregated <- aggregated %>%
+    embedding <- fetch_cell_embeddings(
+      library_list[[library]]$Seurat_Disk, cache)
+
+    dim_names <- paste0(
+      switch(input$reduction,
+        tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
+      1:2
+    )
+
+    data <- cbind(
+      embedding[, c(dim_names, "ident")],
+      expression
+    )
+
+    data <- tidyr::gather(
+      data, tidyselect::any_of(paste0("rna_", gene_list)),
+      key = "gene", value = "expr"
+    )
+
+    aggregated <- data %>%
+      dplyr::group_by(gene, ident) %>%
+      dplyr::summarise(value = fun(expr)) %>%
+      # Convert data frame to matrix
       tidyr::pivot_wider(names_from = ident, values_from = value)
+
     mat <- data.matrix(aggregated[, -1])
-    rownames(mat) <- aggregated[["gene"]]
+    rownames(mat) <- stringr::str_remove(aggregated[["gene"]], "rna_")
 
     mat
   })
@@ -129,12 +155,19 @@ subpopulation_heatmap_page <-  function(
   sub_ht_obj_cache <- shiny::reactiveVal(NULL)
   sub_ht_pos_cache <- shiny::reactiveVal(NULL)
 
+  # shiny::observeEvent(input$submit, {
+  #   ht_obj_cache(NULL)
+  #   ht_pos_cache(NULL)
+  #   sub_ht_obj_cache(NULL)
+  #   sub_ht_pos_cache(NULL)
+  # })
+
   brushed_indexes <- shiny::reactive({
     ht <- ht_obj_cache()
     ht_pos <- ht_pos_cache()
 
     if (shiny::isTruthy(input$heatmap_brush) &&
-          !is.null(ht) && !is.null(ht_pos)) {
+          shiny::isTruthy(ht) && shiny::isTruthy(ht_pos)) {
       lt <- get_pos_from_brush(input$heatmap_brush)
       pos1 <- lt[[1]]
       pos2 <- lt[[2]]
@@ -164,29 +197,33 @@ subpopulation_heatmap_page <-  function(
     }
   })
 
-  brushed_mat <- shiny::eventReactive(input$heatmap_brush, {
+  brushed_mat <- shiny::reactive({
     index_list <- brushed_indexes()
-
-    shiny::req(index_list)
-
     mat <- dataset()
-
-    mat[index_list$row_index, index_list$col_index, drop = FALSE]
+    if (shiny::isTruthy(index_list) && shiny::isTruthy(mat))
+      mat[index_list$row_index, index_list$col_index, drop = FALSE]
+    else
+      NULL
   })
 
   clicked_gene <- shiny::reactiveVal(NULL)
 
+  # Update clicked gene from main heatmap
   shiny::observe({
     ht <- ht_obj_cache()
     ht_pos <- ht_pos_cache()
+    mat <- dataset()
 
-    if (shiny::isTruthy(input$heatmap_click) &&
-      shiny::isTruthy(ht) && shiny::isTruthy(ht_pos)) {
+    if (shiny::isTruthy(input$heatmap_click)
+          && shiny::isTruthy(ht)
+          && shiny::isTruthy(ht_pos)
+          && shiny::isTruthy(mat)) {
+
       pos <- get_pos_from_click(input$heatmap_click)
       selection <- InteractiveComplexHeatmap::selectPosition(
         ht, pos,
         mark = FALSE,
-        ht_pos = ht_pos_cache(),
+        ht_pos = ht_pos,
         verbose = FALSE,
         calibrate = FALSE
       )
@@ -194,11 +231,12 @@ subpopulation_heatmap_page <-  function(
       row_index <- unique(unlist(selection$row_index))
       col_index <- unique(unlist(selection$column_index))
 
-      mat <- dataset()
-
       sub <- mat[row_index, col_index, drop = FALSE]
 
-      clicked_gene(rownames(sub))
+      if (nrow(sub) != 0)
+        clicked_gene(paste0("rna_", rownames(sub)))
+      else
+        clicked_gene(NULL)
 
       sub
 
@@ -208,6 +246,7 @@ subpopulation_heatmap_page <-  function(
 
   })
 
+  # Update clicked gene from main sub-heatmap
   shiny::observe({
     ht <- sub_ht_obj_cache()
     ht_pos <- sub_ht_pos_cache()
@@ -230,7 +269,7 @@ subpopulation_heatmap_page <-  function(
 
       sub <- mat[row_index, col_index, drop = FALSE]
 
-      clicked_gene(rownames(sub))
+      clicked_gene(paste0("rna_", rownames(sub)))
 
       sub
     } else {
@@ -269,10 +308,21 @@ subpopulation_heatmap_page <-  function(
   })
 
   ht_raw_obj <- shiny::reactive({
-    gene_list <- gene_queries()
+    mtx <- dataset()
+
+    shiny::req(mtx)
 
     ht <- plot_subpopulation_heatmap(
-      dataset(), length(gene_list) < MAX_GENE_NUM)
+      mtx,
+      nrow(mtx) < MAX_GENE_NUM,
+      col = colorRampPalette(
+        c("grey", "white", "yellow", "red", "dark red"))(256),
+      heatmap_legend_param = list(
+        title = "Expression Level",
+        title_position = "leftcenter-rot",
+        legend_height = grid::unit(6, "cm")
+      )
+    )
 
     ht
   })
@@ -292,11 +342,13 @@ subpopulation_heatmap_page <-  function(
   output$sub_heatmap <- shiny::renderPlot({
     index_list <- brushed_indexes()
     ht_list <- ht_obj_cache()
+    subm <- brushed_mat()
 
-    if (shiny::isTruthy(index_list) && !is.null(ht_list)) {
-      subm <- brushed_mat()
+    if (shiny::isTruthy(index_list)
+          && shiny::isTruthy(ht_list)
+          && shiny::isTruthy(subm)) {
 
-      message("Plot brushed heatmap...")
+      #message("Plot brushed heatmap...")
       start_time <- Sys.time()
 
       ri <- index_list$row_index
@@ -340,7 +392,7 @@ subpopulation_heatmap_page <-  function(
 
       end_time <- Sys.time()
       elapsed <- end_time - start_time
-      message("Finished plot brushed heatmap in ", elapsed, " secs")
+      #message("Finished plot brushed heatmap in ", elapsed, " secs")
 
       ht_selected
     } else {
@@ -348,14 +400,29 @@ subpopulation_heatmap_page <-  function(
     }
   })
 
-  output$projection <- shiny::renderPlot({
+  clicked_data <- shiny::reactive({
     selected_gene <- clicked_gene()
-    if (!is.null(selected_gene)) {
-      library <- shiny::isolate(input$select_sample)
+    if (shiny::isTruthy(selected_gene)) {
+      dim_names <- paste0(
+        switch(input$reduction,
+          tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
+        1:2
+      )
+      cbind(
+        shiny::isolate(cache$cell_embeddings)[, c(dim_names, "ident"), drop = FALSE],
+        shiny::isolate(cache$gene_expressions)[, selected_gene, drop = FALSE]
+      )
+    } else {
+      NULL
+    }
+  })
+
+  output$projection <- shiny::renderPlot({
+    data_to_plot <- clicked_data()
+    gene <- clicked_gene()
+    if (shiny::isTruthy(data_to_plot) && shiny::isTruthy(gene)) {
       reduction <- input$reduction
-      obj <- cache[[library]]$Seurat_Object()
-      Seurat::DefaultAssay(obj) <- "RNA"
-      Seurat::FeaturePlot(obj, features = selected_gene, reduction = reduction)
+      feature_scatter(data_to_plot, gene, reduction = reduction)
     } else {
       plot_placeholder(
         "Click heatmap to \nselect a gene to projection.")
@@ -363,13 +430,10 @@ subpopulation_heatmap_page <-  function(
   })
 
   output$vlnplot <- shiny::renderPlot({
-    selected_gene <- clicked_gene()
-    if (!is.null(selected_gene)) {
-      library <- shiny::isolate(input$select_sample)
-      reduction <- input$reduction
-      obj <- cache[[library]]$Seurat_Object()
-      Seurat::DefaultAssay(obj) <- "RNA"
-      Seurat::VlnPlot(obj, features = selected_gene)
+    data_to_plot <- clicked_data()
+    gene <- clicked_gene()
+    if (shiny::isTruthy(data_to_plot) && shiny::isTruthy(gene)) {
+      feature_violin(data_to_plot, gene)
     } else {
       plot_placeholder(
         "Click heatmap to \nselect a gene to projection.")
@@ -378,6 +442,7 @@ subpopulation_heatmap_page <-  function(
 
   output$selected_info <- DT::renderDataTable({
     mat <- brushed_mat()
+    shiny::req(mat)
     mat <- round(mat, 2)
     DT::datatable(
       mat,

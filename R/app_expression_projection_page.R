@@ -39,25 +39,46 @@ expression_projection_page_ui <- function(id) {
   )
 }
 
-expression_projection_page <- function(
-  input, output, session, library_list, cache) {
-  shiny::updateSelectInput(
-    session,
-    "select_sample",
-    choices = basename(names(library_list)),
-  )
+fetch_gene_expression <- function(h5seurat_file, genes, cache) {
+  if (!is.null(shiny::isolate(cache$gene_expressions))) {
+    genes_to_query <- setdiff(
+      paste0("rna_", genes),
+      names(shiny::isolate(cache$gene_expressions))
+    )
+  } else {
+    genes_to_query <- paste0("rna_", genes)
+  }
 
-  cell_embeddings <- shiny::reactive({
-    shiny::req(input$select_sample)
-    library <- input$select_sample
+  if (length(genes_to_query) > 0) {
+    waiter::waiter_show(html = tagList(
+      waiter::spin_flower(),
+      htmltools::h4("Loading Gene Expressions..."),
+      htmltools::p(paste(genes_to_query, collapse = " "))
+    ))
+    on.exit(waiter::waiter_hide(), add = TRUE)
 
+    hfile <- SeuratDisk::Connect(h5seurat_file)
+    on.exit(hfile$close_all(), add = TRUE)
+    expressions <- SeuratDisk::FetchCellData(hfile, vars = genes_to_query)
+
+    if (!is.null(shiny::isolate(cache$gene_expressions)))
+      cache$gene_expressions[genes_to_query] <- expressions
+    else
+      cache$gene_expressions <- expressions
+  }
+
+  shiny::isolate(cache$gene_expressions)[paste0("rna_", genes)]
+}
+
+fetch_cell_embeddings <- function(h5seurat_file, cache) {
+  if (is.null(shiny::isolate(cache$cell_embeddings))) {
     waiter::waiter_show(html = tagList(
       waiter::spin_flower(),
       htmltools::h4("Loading Cell Embeddings...")
     ))
     on.exit(waiter::waiter_hide(), add = TRUE)
 
-    hfile <- SeuratDisk::Connect(library_list[[library]]$Seurat_Disk)
+    hfile <- SeuratDisk::Connect(h5seurat_file)
     on.exit(hfile$close_all(), add = TRUE)
 
     embeddings <- SeuratDisk::FetchCellData(
@@ -70,33 +91,96 @@ expression_projection_page <- function(
       )
     )
 
+    cache$cell_embeddings <- embeddings
     embeddings
-  })
+  } else {
+    shiny::isolate(cache$cell_embeddings)
+  }
+}
+
+cluster_plot <- function(data, reduction) {
+  dim_names <- paste0(
+    switch(reduction,
+      tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
+    1:2
+  )
+
+  ggplot2::ggplot(
+      data = data,
+      mapping = ggplot2::aes_string(
+        x = dim_names[1], y = dim_names[2], color = "ident")) +
+    ggplot2::geom_point(size = 1) +
+    ggplot2::scale_color_manual(
+      values = Seurat::DiscretePalette(length(levels(data$ident)))) +
+    ggplot2::coord_fixed() +
+    ggplot2::guides(color = ggplot2::guide_legend(
+      override.aes = list(size = 3))) +
+    cowplot::theme_cowplot()
+}
+
+feature_scatter <- function(data, feature, reduction) {
+  dim_names <- paste0(
+    switch(reduction,
+      tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
+    1:2
+  )
+
+  data %>%
+    dplyr::arrange(.data[[feature]]) %>%
+    ggplot2::ggplot(
+        mapping = ggplot2::aes_string(
+          x = dim_names[1], y = dim_names[2], color = feature)) +
+      ggplot2::geom_point(size = .2) +
+      ggplot2::scale_colour_gradient(low = "lightgrey", high = "blue") +
+      ggplot2::ggtitle(feature) +
+      ggplot2::coord_fixed() +
+      cowplot::theme_cowplot() +
+      ggplot2::theme(
+        plot.title = ggplot2::element_text(hjust = 0.5),
+        legend.title = ggplot2::element_blank()
+      )
+}
+
+feature_violin <- function(data, feature) {
+  Seurat:::SingleExIPlot(
+    type = "violin",
+    data = data[, feature, drop = FALSE],
+    idents = data$ident,
+    adjust = 1, pt.size = 0.1
+  ) +
+  ggplot2::guides(fill = "none")
+}
+
+expression_projection_page <- function(
+  input, output, session, library_list, cache) {
+  shiny::updateSelectInput(
+    session,
+    "select_sample",
+    choices = basename(names(library_list)),
+  )
 
   gene_queries <- shiny::eventReactive(input$submit, {
-    gene_list <- strsplit(input$gene_list, "\n")[[1]]
+    gene_list <- strsplit(stringr::str_trim(input$gene_list), "\n")[[1]]
     unique(gene_list)
   })
 
+  # Loading Cell Embeddings
+  cell_embeddings <- shiny::reactive({
+    shiny::req(input$select_sample)
+    fetch_cell_embeddings(
+      library_list[[input$select_sample]]$Seurat_Disk, cache)
+  })
+
+  # Loading Gene Expressions
   gene_expressions <- shiny::eventReactive(input$submit, {
     shiny::req(input$select_sample)
     library <- input$select_sample
 
-    waiter::waiter_show(html = tagList(
-      waiter::spin_flower(),
-      htmltools::h4("Loading Gene Expressions...")
-    ))
-    on.exit(waiter::waiter_hide(), add = TRUE)
-
-    hfile <- SeuratDisk::Connect(library_list[[library]]$Seurat_Disk)
-    on.exit(hfile$close_all(), add = TRUE)
-
-    genes <- gene_queries()
-
-    expressions <- SeuratDisk::FetchCellData(
-      hfile, vars = paste0("rna_", genes))
-
-    expressions
+    fetch_gene_expression(
+      library_list[[library]]$Seurat_Disk,
+      gene_queries(),
+      cache
+    )
   })
 
   data_to_plot <- shiny::reactive({
@@ -106,10 +190,14 @@ expression_projection_page <- function(
         tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
       1:2
     )
-    cbind(cell_embeddings()[, c(dim_names, "ident")], gene_expressions())
+    cbind(
+      cell_embeddings()[, c(dim_names, "ident")],
+      gene_expressions()
+    )
   })
 
   output$dimplot <- shiny::renderPlot({
+    shiny::req(cell_embeddings())
     dim_names <- paste0(
       switch(input$reduction,
         tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
@@ -117,18 +205,7 @@ expression_projection_page <- function(
     )
 
     data_to_plot <- cell_embeddings()[, c(dim_names, "ident")]
-
-    ggplot2::ggplot(
-        data = data_to_plot,
-        mapping = ggplot2::aes_string(
-          x = dim_names[1], y = dim_names[2], color = "ident")) +
-      ggplot2::geom_point(size = 1) +
-      ggplot2::scale_color_manual(
-        values = Seurat::DiscretePalette(length(levels(data_to_plot$ident)))) +
-      ggplot2::coord_fixed() +
-      ggplot2::guides(color = ggplot2::guide_legend(
-        override.aes = list(size = 3))) +
-      cowplot::theme_cowplot()
+    cluster_plot(data_to_plot, reduction = input$reduction)
   })
 
   # Dynamically render plotOutput that user need.
@@ -172,22 +249,8 @@ expression_projection_page <- function(
       output[[paste0("scatter-", gene_id)]] <- shiny::renderPlot({
         data_to_plot <- data_to_plot()
         gene_id_p <- paste0("rna_", gene_id)
-        dim_names <- names(data_to_plot)[1:2]
         if (gene_id_p %in% names(data_to_plot)) {
-          data_to_plot %>%
-            dplyr::arrange(.data[[gene_id_p]]) %>%
-            ggplot2::ggplot(
-                mapping = ggplot2::aes_string(
-                  x = dim_names[1], y = dim_names[2], color = gene_id_p)) +
-              ggplot2::geom_point(size = .2) +
-              ggplot2::scale_colour_gradient(low = "lightgrey", high = "blue") +
-              ggplot2::ggtitle(gene_id_p) +
-              ggplot2::coord_fixed() +
-              cowplot::theme_cowplot() +
-              ggplot2::theme(
-                plot.title = ggplot2::element_text(hjust = 0.5),
-                legend.title = ggplot2::element_blank()
-              )
+          feature_scatter(data_to_plot, gene_id_p, reduction = reduction)
         } else {
           plot_placeholder("Not Found")
         }
@@ -196,14 +259,7 @@ expression_projection_page <- function(
         gene_id_p <- paste0("rna_", gene_id)
         data_to_plot <- data_to_plot()
         if (gene_id_p %in% names(data_to_plot)) {
-          p <- Seurat:::SingleExIPlot(
-            type = "violin",
-            data = data_to_plot[, gene_id_p, drop = FALSE],
-            idents = data_to_plot$ident,
-            adjust = 1,
-            pt.size = 1
-          )
-          p + ggplot2::guides(fill = "none")
+          feature_violin(data_to_plot, gene_id_p)
         } else {
           plot_placeholder("Not Found")
         }
