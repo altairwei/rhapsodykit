@@ -67,7 +67,9 @@ fetch_gene_expression <- function(h5seurat_file, genes, cache) {
       cache$gene_expressions <- expressions
   }
 
-  shiny::isolate(cache$gene_expressions)[paste0("rna_", genes)]
+  exprs <- shiny::isolate(cache$gene_expressions)
+  genes_found <- intersect(paste0("rna_", genes), names(exprs))
+  exprs[, genes_found]
 }
 
 fetch_cell_embeddings <- function(h5seurat_file, cache) {
@@ -125,11 +127,15 @@ feature_scatter <- function(data, feature, reduction) {
     1:2
   )
 
+  col_name <- names(data)
+  col_name[match(feature, col_name)] <- "expression"
+  names(data) <- col_name
+
   data %>%
-    dplyr::arrange(.data[[feature]]) %>%
+    dplyr::arrange(expression) %>%
     ggplot2::ggplot(
         mapping = ggplot2::aes_string(
-          x = dim_names[1], y = dim_names[2], color = feature)) +
+          x = dim_names[1], y = dim_names[2], color = "expression")) +
       ggplot2::geom_point(size = .2) +
       ggplot2::scale_colour_gradient(low = "lightgrey", high = "blue") +
       ggplot2::ggtitle(feature) +
@@ -146,7 +152,7 @@ feature_violin <- function(data, feature) {
     type = "violin",
     data = data[, feature, drop = FALSE],
     idents = data$ident,
-    adjust = 1, pt.size = 0.1
+    adjust = 1, pt.size = 0
   ) +
   ggplot2::guides(fill = "none")
 }
