@@ -69,7 +69,7 @@ fetch_gene_expression <- function(h5seurat_file, genes, cache) {
 
   exprs <- shiny::isolate(cache$gene_expressions)
   genes_found <- intersect(paste0("rna_", genes), names(exprs))
-  exprs[, genes_found]
+  exprs[, genes_found, drop = FALSE]
 }
 
 fetch_cell_embeddings <- function(h5seurat_file, cache) {
