@@ -15,6 +15,16 @@ expression_projection_page_ui <- function(id) {
           choiceNames = c("UMAP", "t-SNE", "PCA"),
           inline = TRUE
         ),
+        shiny::checkboxInput(
+          inputId = ns("showpoints"),
+          label = "Show points in violin plots",
+          value = FALSE
+        ),
+        shiny::checkboxInput(
+          inputId = ns("order"),
+          label = "Plot cells in order of expression",
+          value = TRUE
+        ),
         shiny::textAreaInput(
           inputId = ns("gene_list"),
           label = "Genes to Query:",
@@ -120,7 +130,7 @@ cluster_plot <- function(data, reduction) {
     cowplot::theme_cowplot()
 }
 
-feature_scatter <- function(data, feature, reduction) {
+feature_scatter <- function(data, feature, reduction, order = TRUE) {
   dim_names <- paste0(
     switch(reduction,
       tsne = "tSNE_", umap = "UMAP_", pca = "PC_"),
@@ -131,8 +141,10 @@ feature_scatter <- function(data, feature, reduction) {
   col_name[match(feature, col_name)] <- "expression"
   names(data) <- col_name
 
+  if (order)
+    data <- dplyr::arrange(data, expression)
+
   data %>%
-    dplyr::arrange(expression) %>%
     ggplot2::ggplot(
         mapping = ggplot2::aes_string(
           x = dim_names[1], y = dim_names[2], color = "expression")) +
@@ -147,12 +159,12 @@ feature_scatter <- function(data, feature, reduction) {
       )
 }
 
-feature_violin <- function(data, feature) {
+feature_violin <- function(data, feature, pt.size = 0) {
   Seurat:::SingleExIPlot(
     type = "violin",
     data = data[, feature, drop = FALSE],
     idents = data$ident,
-    adjust = 1, pt.size = 0
+    adjust = 1, pt.size = pt.size
   ) +
   ggplot2::guides(fill = "none")
 }
@@ -256,7 +268,12 @@ expression_projection_page <- function(
         data_to_plot <- data_to_plot()
         gene_id_p <- paste0("rna_", gene_id)
         if (gene_id_p %in% names(data_to_plot)) {
-          feature_scatter(data_to_plot, gene_id_p, reduction = reduction)
+          feature_scatter(
+            data_to_plot,
+            gene_id_p,
+            reduction = reduction,
+            order = input$order
+          )
         } else {
           plot_placeholder("Not Found")
         }
@@ -264,8 +281,9 @@ expression_projection_page <- function(
       output[[paste0("violin-", gene_id)]] <- shiny::renderPlot({
         gene_id_p <- paste0("rna_", gene_id)
         data_to_plot <- data_to_plot()
+        points <- ifelse(input$showpoints, 0.1, 0)
         if (gene_id_p %in% names(data_to_plot)) {
-          feature_violin(data_to_plot, gene_id_p)
+          feature_violin(data_to_plot, gene_id_p, pt.size = points)
         } else {
           plot_placeholder("Not Found")
         }
