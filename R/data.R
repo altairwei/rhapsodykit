@@ -17,7 +17,8 @@ save_png <- function(filename, plot, width = 7, height = 7, dpi = 300) {
 
 #' Each row represents the number of molecules in a cell
 #' for each gene in WTA outputs. A cell is identified with
-#' a unique cell index number under Cell_Index.
+#' a unique cell index number under Cell_Index. This data
+#' contains partial non-expressing genes.
 read_mols_per_cell <- function(x) {
   message(sprintf("Reading %s", x))
   df <- readr::read_csv(x, comment = "#", progress = TRUE,
@@ -27,6 +28,36 @@ read_mols_per_cell <- function(x) {
   )
 
   message("Matrix constructing")
+  m <- data.matrix(df[, -1])
+  rownames(m) <- df[["Cell_Index"]]
+  m <- t(m)
+  mtx <- Matrix::Matrix(m)
+
+  rm(df, m)
+  gc()
+
+  mtx
+}
+
+#' Each row records counts for cell-gene combinations that have
+#' non-zero RSEC molecule counts. This data does not contain
+#' non-expressing genes.
+read_expression_st <- function(x) {
+  message(sprintf("Reading %s", x))
+  df <- readr::read_tsv(x, comment = "#", progress = TRUE,
+    col_types = readr::cols(
+      Cell_Index = readr::col_character()
+    )
+  )
+
+  message("Matrix constructing")
+  df <- df %>%
+    dplyr::select(Cell_Index, Gene, RSEC_Adjusted_Molecules) %>%
+    tidyr::pivot_wider(
+      names_from = Gene,
+      values_from = RSEC_Adjusted_Molecules,
+      values_fill = 0)
+
   m <- data.matrix(df[, -1])
   rownames(m) <- df[["Cell_Index"]]
   m <- t(m)
@@ -75,14 +106,14 @@ read_unfiltered_csv <- function(base_dir = ".") {
   }
 
   matrix_loc <- Sys.glob(
-    file.path(base_dir, "*_RSEC_MolsPerCell_Unfiltered.csv.gz"))
+    file.path(base_dir, "*_Expression_Data_Unfiltered.st.gz"))
 
   if (length(matrix_loc) != 1) {
     stop(sprintf("`%s` missing or more than one file was found.",
-      "*_RSEC_MolsPerCell_Unfiltered.csv.gz"))
+      "*_Expression_Data_Unfiltered.st.gz"))
   }
 
-  read_mols_per_cell(matrix_loc)
+  read_expression_st(matrix_loc)
 }
 
 #' Save Matrix data to disk.

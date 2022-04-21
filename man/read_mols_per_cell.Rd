@@ -4,12 +4,14 @@
 \alias{read_mols_per_cell}
 \title{Each row represents the number of molecules in a cell
 for each gene in WTA outputs. A cell is identified with
-a unique cell index number under Cell_Index.}
+a unique cell index number under Cell_Index. This data
+contains partial non-expressing genes.}
 \usage{
 read_mols_per_cell(x)
 }
 \description{
 Each row represents the number of molecules in a cell
 for each gene in WTA outputs. A cell is identified with
-a unique cell index number under Cell_Index.
+a unique cell index number under Cell_Index. This data
+contains partial non-expressing genes.
 }
