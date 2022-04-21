@@ -8,7 +8,7 @@ save_expression_matrix(mtx, mtx_file)
 }
 \arguments{
 \item{mtx}{An \code{\link[Matrix]{Matrix}} object produced
-from \code{read_raw_csv}}
+from \code{read_molecules_csv}}
 
 \item{mtx_file}{Output filename}
 }

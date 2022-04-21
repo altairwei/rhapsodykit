@@ -15,24 +15,12 @@ save_png <- function(filename, plot, width = 7, height = 7, dpi = 300) {
   dev.off()
 }
 
-#' Read raw expression matrix from Rhapsody WTA pipeline
-#'
-#' @param base_dir Root folder of Rhapsody WTA pipeline results
-#' @return An object constructed from \code{\link[Matrix]{Matrix}}
-#' @export
-read_raw_csv <- function(base_dir = ".") {
-  if (!dir.exists(base_dir)) {
-    stop("Directory provided does not exist")
-  }
-
-  matrix_loc <- Sys.glob(file.path(base_dir, "*_RSEC_MolsPerCell.csv"))
-
-  if (length(matrix_loc) != 1) {
-    stop("`*_RSEC_MolsPerCell.csv` missing or more than one file was found.")
-  }
-
-  message(sprintf("Reading %s", matrix_loc))
-  df <- readr::read_csv(matrix_loc, comment = "#", progress = TRUE,
+#' Each row represents the number of molecules in a cell
+#' for each gene in WTA outputs. A cell is identified with
+#' a unique cell index number under Cell_Index.
+read_mols_per_cell <- function(x) {
+  message(sprintf("Reading %s", x))
+  df <- readr::read_csv(x, comment = "#", progress = TRUE,
     col_types = readr::cols(
       Cell_Index = readr::col_character()
     )
@@ -50,10 +38,57 @@ read_raw_csv <- function(base_dir = ".") {
   mtx
 }
 
+#' Read raw expression matrix from Rhapsody WTA pipeline
+#'
+#' Reads and molecules are counted only if they have passed all
+#' Rhapsody WTA pipeline filters and have been determined to be
+#' from putative cells.
+#'
+#' @param base_dir Root folder of Rhapsody WTA pipeline results
+#' @return An object constructed from \code{\link[Matrix]{Matrix}}
+#' @export
+read_molecules_csv <- function(base_dir = ".") {
+  if (!dir.exists(base_dir)) {
+    stop("Directory provided does not exist")
+  }
+
+  matrix_loc <- Sys.glob(file.path(base_dir, "*_RSEC_MolsPerCell.csv"))
+
+  if (length(matrix_loc) != 1) {
+    stop("`*_RSEC_MolsPerCell.csv` missing or more than one file was found.")
+  }
+
+  read_mols_per_cell(matrix_loc)
+}
+
+#' Read unfiltered expression matrix from Rhapsody WTA pipeline
+#'
+#' Read the file contain unfiltered tables with cell
+#' labels of ≥5 reads.
+#'
+#' @param base_dir Root folder of Rhapsody WTA pipeline results
+#' @return An object constructed from \code{\link[Matrix]{Matrix}}
+#' @export
+read_unfiltered_csv <- function(base_dir = ".") {
+  if (!dir.exists(base_dir)) {
+    stop("Directory provided does not exist")
+  }
+
+  matrix_loc <- Sys.glob(
+    file.path(base_dir, "*_RSEC_MolsPerCell_Unfiltered.csv.gz"))
+
+  if (length(matrix_loc) != 1) {
+    stop(sprintf("`%s` missing or more than one file was found.",
+      "*_RSEC_MolsPerCell_Unfiltered.csv.gz"))
+  }
+
+  read_mols_per_cell(matrix_loc)
+}
+
 #' Save Matrix data to disk.
 #'
 #' @param mtx An \code{\link[Matrix]{Matrix}} object produced
-#'  from \code{read_raw_csv}
+#'  from \code{read_molecules_csv}
 #' @param mtx_file Output filename
 #' @export
 save_expression_matrix <- function(mtx, mtx_file) {
@@ -110,7 +145,7 @@ read_rhapsody_wta <- function(base_dir, use_mtx = FALSE) {
   if (isTRUE(use_mtx)) {
     expr_matrix <- read_mtx(base_dir)
   } else {
-    expr_matrix <- read_raw_csv(base_dir)
+    expr_matrix <- read_molecules_csv(base_dir)
   }
 
   expr_matrix
