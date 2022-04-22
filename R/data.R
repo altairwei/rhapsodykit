@@ -50,21 +50,25 @@ read_expression_st <- function(x) {
     )
   )
 
-  message("Matrix constructing")
+  message("Matrix constructing...")
   df <- df %>%
-    dplyr::select(Cell_Index, Gene, RSEC_Adjusted_Molecules) %>%
-    tidyr::pivot_wider(
-      names_from = Gene,
-      values_from = RSEC_Adjusted_Molecules,
-      values_fill = 0)
+    dplyr::select(Cell_Index, Gene, RSEC_Adjusted_Molecules)
 
-  m <- data.matrix(df[, -1])
-  rownames(m) <- df[["Cell_Index"]]
-  m <- t(m)
-  mtx <- Matrix::Matrix(m)
+  colindex <- unique(df$Cell_Index)
+  rowindex <- unique(df$Gene)
 
-  rm(df, m)
-  gc()
+  # The locations of the non-zero values (RSEC_Adjusted_Molecules)
+  colpos <- match(df$Cell_Index, colindex)
+  rowpos <- match(df$Gene, rowindex)
+
+  mtx <- Matrix::sparseMatrix(
+    i = rowpos,
+    j = colpos,
+    x = df$RSEC_Adjusted_Molecules,
+    use.last.ij = TRUE,
+    repr = "C",
+    dimnames = list(rowindex, colindex),
+  )
 
   mtx
 }
