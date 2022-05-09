@@ -348,13 +348,13 @@ integrated_sample_analysis <- function(
   ...
 ) {
   obj_anchors <- integration_anchorset(
-    obj_list = obj_list, n_dims = n_dims, ...)
+    obj_list = obj_list, n_dims = n_dims, verbose = verbose, ...)
 
   obj_combined <- Seurat::IntegrateData(
     anchorset = obj_anchors, dims = 1:n_dims, verbose = verbose)
 
   if (analyze)
-    obj_combined <- integration_analysis(obj_combined)
+    obj_combined <- integration_analysis(obj_combined, verbose = verbose)
 
   obj_combined
 }
