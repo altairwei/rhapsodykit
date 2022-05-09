@@ -344,13 +344,14 @@ merge_analysis <- function(
 #'
 #' @export
 integrated_sample_analysis <- function(
-  obj_list, n_dims = 20, analyze = TRUE, ...
+  obj_list, n_dims = 20, analyze = TRUE, verbose = TRUE,
+  ...
 ) {
   obj_anchors <- integration_anchorset(
     obj_list = obj_list, n_dims = n_dims, ...)
 
   obj_combined <- Seurat::IntegrateData(
-    anchorset = obj_anchors, dims = 1:n_dims)
+    anchorset = obj_anchors, dims = 1:n_dims, verbose = verbose)
 
   if (analyze)
     obj_combined <- integration_analysis(obj_combined)
@@ -363,6 +364,7 @@ integrated_sample_analysis <- function(
 #' @param obj_list A list of Seurat objects.
 #' @param n_dims Number of dimensions to use as input.
 #' @param normalization Normalization method.
+#' @param verbose Print output
 #' @param ... pass to \code{\link[Seurat]{FindIntegrationAnchors}}
 #' @inheritParams Seurat::FindIntegrationAnchors
 #' @return Returns an \code{AnchorSet} object that can be used as input
@@ -376,6 +378,7 @@ integration_anchorset <- function(
   k.anchor = 5,
   reference = NULL,
   normalization = "LogNormalize",
+  verbose = TRUE,
   ...
 ) {
   stopifnot(all(sapply(obj_list, inherits, "Seurat")))
@@ -383,22 +386,24 @@ integration_anchorset <- function(
   obj_list <- lapply(obj_list, function(obj) {
 
     if (normalization == "SCTransform") {
-      obj <- Seurat::SCTransform(obj, do.scale = FALSE)
+      obj <- Seurat::SCTransform(obj, do.scale = FALSE, verbose = verbose)
     } else {
-      obj <- Seurat::NormalizeData(obj, normalization.method = normalization)
+      obj <- Seurat::NormalizeData(
+        obj, normalization.method = normalization, verbose = verbose)
     }
 
     obj <- Seurat::FindVariableFeatures(
-      obj, selection.method = "vst", nfeatures = 2000)
+      obj, selection.method = "vst", nfeatures = 2000, verbose = verbose)
   })
 
-  features <- Seurat::SelectIntegrationFeatures(object.list = obj_list)
+  features <- Seurat::SelectIntegrationFeatures(
+    object.list = obj_list, verbose = verbose)
 
   reduction <- match.arg(reduction)
   if (reduction == "rpca") {
     obj_list <- lapply(obj_list, function(x) {
-        x <- Seurat::ScaleData(x, features = features, verbose = FALSE)
-        x <- Seurat::RunPCA(x, features = features, verbose = FALSE)
+        x <- Seurat::ScaleData(x, features = features, verbose = verbose)
+        x <- Seurat::RunPCA(x, features = features, verbose = verbose)
     })
   }
 
@@ -409,6 +414,7 @@ integration_anchorset <- function(
     anchor.features = features,
     k.anchor = k.anchor,
     reference = reference,
+    verbose = verbose,
     ...
   )
 
@@ -420,28 +426,31 @@ integration_anchorset <- function(
 #' @param object Integrated Seurat object
 #' @param n_dims Number of dimensions to use as input.
 #' @param cluster_res Resolution for \code{\link[Seurat]{FindClusters}}
+#' @param verbose Print output
 #' @return A Seurat object
 #' @export
 integration_analysis <- function(
-  object, n_dims = 20, cluster_res = 0.5
+  object, n_dims = 20, cluster_res = 0.5,
+  verbose = TRUE
 ) {
   Seurat::DefaultAssay(object) <- "integrated"
 
   # Run the standard workflow for visualization and clustering
-  object <- Seurat::ScaleData(object)
-  object <- Seurat::RunPCA(object)
+  object <- Seurat::ScaleData(object, verbose = verbose)
+  object <- Seurat::RunPCA(object, verbose = verbose)
   # t-SNE and Clustering
 
   #TODO: Make sure umap-learn work properly
-  object <- Seurat::RunUMAP(object, dims = 1:n_dims)
+  object <- Seurat::RunUMAP(object, dims = 1:n_dims, verbose = verbose)
 
   #TODO: Check duplicates manually
   # Workaround: https://github.com/satijalab/seurat/issues/167
   object <- Seurat::RunTSNE(
-    object, dims = 1:n_dims, check_duplicates = FALSE)
+    object, dims = 1:n_dims, check_duplicates = FALSE, verbose = verbose)
 
-  object <- Seurat::FindNeighbors(object, dims = 1:n_dims)
-  object <- Seurat::FindClusters(object, resolution = cluster_res)
+  object <- Seurat::FindNeighbors(object, dims = 1:n_dims, verbose = verbose)
+  object <- Seurat::FindClusters(
+    object, resolution = cluster_res, verbose = verbose)
 
   object
 }

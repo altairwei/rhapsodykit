@@ -4,7 +4,13 @@
 \alias{integrated_sample_analysis}
 \title{Perform Seurat integrated analysis for grouped samples}
 \usage{
-integrated_sample_analysis(obj_list, n_dims = 20, analyze = TRUE, ...)
+integrated_sample_analysis(
+  obj_list,
+  n_dims = 20,
+  analyze = TRUE,
+  verbose = TRUE,
+  ...
+)
 }
 \arguments{
 \item{obj_list}{A list of Seurat objects.}
@@ -12,6 +18,8 @@ integrated_sample_analysis(obj_list, n_dims = 20, analyze = TRUE, ...)
 \item{n_dims}{Number of dimensions to use as input.}
 
 \item{analyze}{Perform general Seurat analysis on integrated object or not.}
+
+\item{verbose}{Print output}
 
 \item{...}{pass to \code{integration_anchorset}}
 }

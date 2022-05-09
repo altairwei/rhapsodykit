@@ -4,7 +4,7 @@
 \alias{integration_analysis}
 \title{Perform general Seurat analysis on integrated object}
 \usage{
-integration_analysis(object, n_dims = 20, cluster_res = 0.5)
+integration_analysis(object, n_dims = 20, cluster_res = 0.5, verbose = TRUE)
 }
 \arguments{
 \item{object}{Integrated Seurat object}
@@ -12,6 +12,8 @@ integration_analysis(object, n_dims = 20, cluster_res = 0.5)
 \item{n_dims}{Number of dimensions to use as input.}
 
 \item{cluster_res}{Resolution for \code{\link[Seurat]{FindClusters}}}
+
+\item{verbose}{Print output}
 }
 \value{
 A Seurat object

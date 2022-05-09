@@ -11,6 +11,7 @@ integration_anchorset(
   k.anchor = 5,
   reference = NULL,
   normalization = "LogNormalize",
+  verbose = TRUE,
   ...
 )
 }
@@ -38,6 +39,8 @@ then integrated through pairwise integration. Each query is then mapped to
 the integrated reference.}
 
 \item{normalization}{Normalization method.}
+
+\item{verbose}{Print output}
 
 \item{...}{pass to \code{\link[Seurat]{FindIntegrationAnchors}}}
 }
