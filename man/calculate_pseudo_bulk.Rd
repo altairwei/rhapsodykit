@@ -7,6 +7,7 @@
 calculate_pseudo_bulk(
   sce,
   type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  fun = NULL,
   ...
 )
 }
@@ -20,6 +21,9 @@ cell metadata (\code{colData}) columns have to be provided:
 }}
 
 \item{type}{Value type of pseudo-bulk data.}
+
+\item{fun}{Function used to calculate pseudobulk, mean or sum. If
+\code{fun} is not specified, it will be chosen according \code{type}}
 
 \item{...}{Args passed to \code{muscat::aggregateData}}
 }

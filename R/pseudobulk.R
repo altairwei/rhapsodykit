@@ -106,7 +106,6 @@ prepare_muscat_sce <- function(
   seurat_object, sample_make_names = FALSE, group_make_names = FALSE) {
   stopifnot(
     inherits(seurat_object, "Seurat"),
-    Seurat::DefaultAssay(seurat_object) == "integrated",
     !is.null(seurat_object@meta.data$sample),
     !is.null(seurat_object@meta.data$group)
   )
@@ -140,11 +139,14 @@ prepare_muscat_sce <- function(
 #'   \item{\code{group_id}}{experimental group/condition}
 #' }
 #' @param type Value type of pseudo-bulk data.
+#' @param fun Function used to calculate pseudobulk, mean or sum. If
+#' \code{fun} is not specified, it will be chosen according \code{type}
 #' @param ... Args passed to \code{muscat::aggregateData}
 #' @return A SingleCellExperiment object.
 #' @export
 calculate_pseudo_bulk <- function(sce,
   type = c("counts", "logcounts", "cpm", "vstresiduals"),
+  fun = NULL,
   ...
 ) {
   stopifnot(
@@ -163,7 +165,7 @@ calculate_pseudo_bulk <- function(sce,
     },
     cpm = {
       sce %>%
-        SingleCellExperiment::counts() %>%
+        scater::computeLibraryFactors() %>%
         scater::calculateCPM()
     },
     vstresiduals = {
@@ -179,14 +181,16 @@ calculate_pseudo_bulk <- function(sce,
     }
   )
 
-  fun <- switch(type,
-    counts = "sum",
-    logcounts = "mean",
-    cpm = "sum",
-    vstresiduals = "mean"
-  )
+  if (is.null(fun)) {
+    fun <- switch(type,
+      counts = "sum",
+      logcounts = "mean",
+      cpm = "sum",
+      vstresiduals = "mean"
+    )
+  }
 
-  scale <- switch(type, cpm = TRUE, FALSE)
+  scale <- switch(type, cpm = if (fun == "sum") TRUE else FALSE, FALSE)
 
   pb <- muscat::aggregateData(sce, type, fun = fun, scale = scale, ...)
 
