@@ -152,11 +152,6 @@ calculate_pseudo_bulk <- function(sce,
     all(c("cluster_id", "sample_id", "group_id") %in% names(sce@colData))
   )
 
-  # Simple Quality Control
-
-  # remove undetected genes
-  sce <- sce[Matrix::rowSums(SingleCellExperiment::counts(sce) > 0) > 0, ]
-
   # Normalization
   type <- match.arg(type)
   SummarizedExperiment::assay(sce, type) <- switch(type,
