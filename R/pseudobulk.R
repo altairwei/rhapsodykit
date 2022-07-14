@@ -164,8 +164,9 @@ calculate_pseudo_bulk <- function(sce,
         scater::normalizeCounts()
     },
     cpm = {
+      # Don't computeLibraryFactor before CPM
       sce %>%
-        scater::computeLibraryFactors() %>%
+        SingleCellExperiment::counts() %>%
         scater::calculateCPM()
     },
     vstresiduals = {
