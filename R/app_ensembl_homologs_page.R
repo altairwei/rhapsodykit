@@ -27,9 +27,12 @@ ensembl_homologs_page_ui <- function(id) {
           label = "Select target species:",
           choices = c("CHOOSE TARGET" = "")
         ),
-        shiny::textInput(
+        shiny::textAreaInput(
           inputId = ns("query_gene"),
-          label = "Query gene:"
+          label = "Genes to Query:",
+          height = "200px",
+          placeholder = paste0("Please enter the list of genes",
+            " to be queried, one gene per line.")
         ),
         shiny::actionButton(
           inputId = ns("submit"),
@@ -142,10 +145,15 @@ ensembl_homologs_page <- function(input, output, session) {
             "WGA Coverage", "Confidence"
         )
 
+        gene_queries <- shiny::eventReactive(input$submit, {
+          gene_list <- strsplit(stringr::str_trim(input$query_gene), "\n")[[1]]
+          unique(gene_list)
+        })
+
         all_homologs <- biomaRt::getBM(
           attributes = intersect(attrs_to_retrive, available_attrs),
           filters = "ensembl_gene_id",
-          values = shiny::isolate(input$query_gene),
+          values = gene_queries(),
           mart = dataset_conn
         )
 
