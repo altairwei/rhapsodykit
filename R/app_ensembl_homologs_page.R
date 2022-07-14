@@ -9,7 +9,7 @@ ensembl_homologs_page_ui <- function(id) {
           label = "Select host:",
           choices = c(
             "CHOOSE HOST" = "",
-            "Ensembl Plants" = "plants.ensembl.org"
+            "Ensembl Plants" = "https://plants.ensembl.org"
             )
         ),
         shiny::selectInput(
