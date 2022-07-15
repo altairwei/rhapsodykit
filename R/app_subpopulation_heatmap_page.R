@@ -485,5 +485,6 @@ subpopulation_heatmap_page <-  function(
         )
       )
     )
-  })
+  },
+  server = FALSE)
 }

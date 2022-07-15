@@ -61,10 +61,12 @@ fetch_gene_expression <- function(library, genes, cache, ...) {
   }
 
   if (length(genes_to_query) > 0) {
-    waiter::waiter_show(html = tagList(
+    waiter::waiter_show(html = htmltools::tagList(
       waiter::spin_flower(),
       htmltools::h4("Loading Gene Expressions..."),
-      htmltools::p(paste(genes_to_query, collapse = " "))
+      htmltools::p(
+        sprintf("Extracting the expression values of %i gene(s)",
+        length(genes_to_query)))
     ))
     on.exit(waiter::waiter_hide(), add = TRUE)
 
