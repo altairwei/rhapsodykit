@@ -14,10 +14,15 @@ main_server <- function(input, output, session) {
 
   library_list <- c(integrated_list)
   # A list of R object cache for each library
-  cache <- shiny::reactiveValues(
-    cell_embeddings = NULL,
-    gene_expressions = NULL
-  )
+
+  cache <- shiny::reactiveValues()
+  for (libname in names(library_list)) {
+    cache[[libname]] <- shiny::reactiveValues(
+      cell_embeddings = NULL,
+      gene_expressions = NULL,
+      h5seurat_file = library_list[[libname]]$Seurat_Disk
+    )
+  }
 
   #shiny::callModule(
   #    metrics_summary_page, "metrics_summary_page", rv, cache)

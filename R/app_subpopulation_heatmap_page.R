@@ -89,6 +89,7 @@ subpopulation_heatmap_page <-  function(
 
   gene_queries <- shiny::eventReactive(input$submit, {
     gene_list <- strsplit(stringr::str_trim(input$gene_list), "\n")[[1]]
+    gene_list <- gene_list[gene_list != ""]
     unique(gene_list)
   })
 
@@ -110,16 +111,15 @@ subpopulation_heatmap_page <-  function(
     gene_list <- gene_queries()
     fun <- shiny::isolate(stat_fun())
 
-    library <- shiny::isolate(input$select_sample)
+    library <- input$select_sample
 
     expression <- fetch_gene_expression(
-      library_list[[library]]$Seurat_Disk,
+      library,
       gene_list,
       cache
     )
 
-    embedding <- fetch_cell_embeddings(
-      library_list[[library]]$Seurat_Disk, cache)
+    embedding <- fetch_cell_embeddings(library, cache)
 
     dim_names <- paste0(
       switch(input$reduction,
@@ -401,6 +401,7 @@ subpopulation_heatmap_page <-  function(
   })
 
   clicked_data <- shiny::reactive({
+    library <- input$select_sample
     selected_gene <- clicked_gene()
     if (shiny::isTruthy(selected_gene)) {
       dim_names <- paste0(
@@ -409,8 +410,8 @@ subpopulation_heatmap_page <-  function(
         1:2
       )
       cbind(
-        shiny::isolate(cache$cell_embeddings)[, c(dim_names, "ident"), drop = FALSE],
-        shiny::isolate(cache$gene_expressions)[, selected_gene, drop = FALSE]
+        shiny::isolate(cache[[library]]$cell_embeddings)[, c(dim_names, "ident"), drop = FALSE],
+        shiny::isolate(cache[[library]]$gene_expressions)[, selected_gene, drop = FALSE]
       )
     } else {
       NULL

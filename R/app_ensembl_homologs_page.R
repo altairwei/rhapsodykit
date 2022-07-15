@@ -69,6 +69,7 @@ ensembl_homologs_page <- function(input, output, session) {
 
       choices <- all_marts$biomart
       names(choices) <- all_marts$version
+      choices <- c("CHOOSE MART" = "", choices)
 
       shiny::updateSelectInput(
         session, "mart", choices = choices)
@@ -86,6 +87,7 @@ ensembl_homologs_page <- function(input, output, session) {
 
       choices <- all_datasets$dataset
       names(choices) <- all_datasets$description
+      choices <- c("CHOOSE DATASET" = "", choices)
 
       shiny::updateSelectInput(
         session, "dataset", choices = choices)
@@ -111,9 +113,15 @@ ensembl_homologs_page <- function(input, output, session) {
 
       choices <- species$name
       names(choices) <- species$description
+      choices <- c("CHOOSE TARGET" = "", choices)
 
       shiny::updateSelectInput(
         session, "target", choices = choices)
+    })
+
+    gene_queries <- shiny::eventReactive(input$submit, {
+      gene_list <- strsplit(stringr::str_trim(input$query_gene), "\n")[[1]]
+      unique(gene_list)
     })
 
     output$homolog_table <- DT::renderDataTable(
@@ -140,15 +148,12 @@ ensembl_homologs_page <- function(input, output, session) {
         attrs_to_retrive <- paste0(
           shiny::isolate(input$target), attrs_to_retrive)
 
+        attrs_to_retrive <- c("ensembl_gene_id", attrs_to_retrive)
         names(attrs_to_retrive) <- c(
-            "Gene ID", "Type", "Target %id", "Query %id",
+            "Query ID", "Gene ID", "Type",
+            "Target %id", "Query %id",
             "WGA Coverage", "Confidence"
         )
-
-        gene_queries <- shiny::eventReactive(input$submit, {
-          gene_list <- strsplit(stringr::str_trim(input$query_gene), "\n")[[1]]
-          unique(gene_list)
-        })
 
         all_homologs <- biomaRt::getBM(
           attributes = intersect(attrs_to_retrive, available_attrs),
@@ -166,7 +171,8 @@ ensembl_homologs_page <- function(input, output, session) {
         all_homologs <- all_homologs[attrs_to_retrive]
 
         all_homologs <- all_homologs %>%
-          dplyr::rename_with(~ names(attrs_to_retrive))
+          dplyr::rename_with(~ names(attrs_to_retrive)) %>%
+          dplyr::filter(`Gene ID` != "")
 
         DT::datatable(
           all_homologs,
@@ -180,11 +186,11 @@ ensembl_homologs_page <- function(input, output, session) {
               "pageLength",
               list(
                 extend = "copyHtml5",
-                text = "Copy Gene ID",
+                text = "Copy Target Gene ID",
                 title = NULL,
                 header = FALSE,
                 exportOptions = list(
-                  columns = 0,
+                  columns = 1,
                   modifier = list(page = "all")
                 )
               ),
@@ -207,6 +213,8 @@ ensembl_homologs_page <- function(input, output, session) {
           )
         )
       },
-      server = TRUE
+      # If server=FALSE then the buttons will export all data in the table,
+      # while if server=TRUE they will only export visible data.
+      server = FALSE
     )
 }

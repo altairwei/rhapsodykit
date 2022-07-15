@@ -49,11 +49,12 @@ expression_projection_page_ui <- function(id) {
   )
 }
 
-fetch_gene_expression <- function(h5seurat_file, genes, cache) {
-  if (!is.null(shiny::isolate(cache$gene_expressions))) {
+fetch_gene_expression <- function(library, genes, cache, ...) {
+  update <- is.null(shiny::isolate(cache[[library]]$gene_expressions))
+  if (!update) {
     genes_to_query <- setdiff(
       paste0("rna_", genes),
-      names(shiny::isolate(cache$gene_expressions))
+      names(shiny::isolate(cache[[library]]$gene_expressions))
     )
   } else {
     genes_to_query <- paste0("rna_", genes)
@@ -67,30 +68,31 @@ fetch_gene_expression <- function(h5seurat_file, genes, cache) {
     ))
     on.exit(waiter::waiter_hide(), add = TRUE)
 
-    hfile <- SeuratDisk::Connect(h5seurat_file)
+    hfile <- SeuratDisk::Connect(cache[[library]]$h5seurat_file)
     on.exit(hfile$close_all(), add = TRUE)
     expressions <- SeuratDisk::FetchCellData(hfile, vars = genes_to_query)
 
-    if (!is.null(shiny::isolate(cache$gene_expressions)))
-      cache$gene_expressions[genes_to_query] <- expressions
+    if (!update)
+      cache[[library]]$gene_expressions[genes_to_query] <- expressions
     else
-      cache$gene_expressions <- expressions
+      cache[[library]]$gene_expressions <- expressions
   }
 
-  exprs <- shiny::isolate(cache$gene_expressions)
+  exprs <- shiny::isolate(cache[[library]]$gene_expressions)
   genes_found <- intersect(paste0("rna_", genes), names(exprs))
   exprs[, genes_found, drop = FALSE]
 }
 
-fetch_cell_embeddings <- function(h5seurat_file, cache) {
-  if (is.null(shiny::isolate(cache$cell_embeddings))) {
+fetch_cell_embeddings <- function(library, cache) {
+  update <- is.null(shiny::isolate(cache[[library]]$cell_embeddings))
+  if (update) {
     waiter::waiter_show(html = tagList(
       waiter::spin_flower(),
       htmltools::h4("Loading Cell Embeddings...")
     ))
     on.exit(waiter::waiter_hide(), add = TRUE)
 
-    hfile <- SeuratDisk::Connect(h5seurat_file)
+    hfile <- SeuratDisk::Connect(cache[[library]]$h5seurat_file)
     on.exit(hfile$close_all(), add = TRUE)
 
     embeddings <- SeuratDisk::FetchCellData(
@@ -103,10 +105,10 @@ fetch_cell_embeddings <- function(h5seurat_file, cache) {
       )
     )
 
-    cache$cell_embeddings <- embeddings
+    cache[[library]]$cell_embeddings <- embeddings
     embeddings
   } else {
-    shiny::isolate(cache$cell_embeddings)
+    shiny::isolate(cache[[library]]$cell_embeddings)
   }
 }
 
@@ -179,6 +181,7 @@ expression_projection_page <- function(
 
   gene_queries <- shiny::eventReactive(input$submit, {
     gene_list <- strsplit(stringr::str_trim(input$gene_list), "\n")[[1]]
+    gene_list <- gene_list[gene_list != ""]
     unique(gene_list)
   })
 
@@ -186,7 +189,7 @@ expression_projection_page <- function(
   cell_embeddings <- shiny::reactive({
     shiny::req(input$select_sample)
     fetch_cell_embeddings(
-      library_list[[input$select_sample]]$Seurat_Disk, cache)
+      input$select_sample, cache)
   })
 
   # Loading Gene Expressions
@@ -195,7 +198,7 @@ expression_projection_page <- function(
     library <- input$select_sample
 
     fetch_gene_expression(
-      library_list[[library]]$Seurat_Disk,
+      library,
       gene_queries(),
       cache
     )
@@ -260,7 +263,6 @@ expression_projection_page <- function(
     plot_output_id_list <- gene_queries()
     last_queries <<- plot_output_id_list
 
-    library <- shiny::isolate(input$select_sample)
     reduction <- shiny::isolate(input$reduction)
 
     invisible(lapply(plot_output_id_list, function(gene_id) {
