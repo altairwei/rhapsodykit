@@ -281,20 +281,47 @@ barplot_cluster_abundance <- function(x, ...) {
   UseMethod("barplot_cluster_abundance")
 }
 
-calculate_cluster_proportion <- function(clusters, samples, groups) {
+#' Calculate the percentage of cell types in samples
+#'
+#' @param clusters A vector or factor which indicates cell types.
+#' @param samples A vector which indicates sample id.
+#' @param groups A vector which indicates group id.
+#' @return A data frame
+#' @export
+calculateClusterProportion <- function(clusters, samples, groups) {
   cluster_prop <- prop.table(table(clusters, samples), 2)
-  df <- reshape2::melt(
-    cluster_prop,
-    varnames = c("cluster_id", "sample_id"),
-    value.name = "frequency",
-    as.is = TRUE
-  )
+
+  df <- as.data.frame(cluster_prop, stringsAsFactors = FALSE)
+  names(df) <- c("cluster_id", "sample_id", "frequency")
 
   if (is.factor(clusters)) {
     df$cluster_id <- factor(df$cluster_id, levels = levels(clusters))
   }
 
   df$group_id <- groups[match(df$sample_id, samples)]
+
+  df <- dplyr::select(df, cluster_id, sample_id, group_id, frequency)
+
+  df
+}
+
+#' @describeIn calculateClusterProportion Calculate the size of cell
+#' types in samples
+#'
+#' @export
+calculateClusterSize <- function(clusters, samples, groups) {
+  cluster_size <- table(clusters, samples)
+
+  df <- as.data.frame(cluster_size, stringsAsFactors = FALSE)
+  names(df) <- c("cluster_id", "sample_id", "size")
+
+  if (is.factor(clusters)) {
+    df$cluster_id <- factor(df$cluster_id, levels = levels(clusters))
+  }
+
+  df$group_id <- groups[match(df$sample_id, samples)]
+
+  df <- dplyr::select(df, cluster_id, sample_id, group_id, size)
 
   df
 }
@@ -363,7 +390,7 @@ barplot_cluster_abundance.data.frame <- function(
 #' @method barplot_cluster_abundance SingleCellExperiment
 #' @export
 barplot_cluster_abundance.SingleCellExperiment <- function(sce, ...) {
-  df <- calculate_cluster_proportion(
+  df <- calculateClusterProportion(
     sce$cluster_id, sce$sample_id, sce$group_id)
 
   barplot_cluster_abundance(df, ...)
@@ -385,7 +412,7 @@ barplot_cluster_abundance.Seurat <- function(srt, ...) {
   )
 
   srt_df <- SeuratObject::FetchData(srt, c("ident", "sample", "group"))
-  df <- calculate_cluster_proportion(
+  df <- calculateClusterProportion(
     srt_df$ident, srt_df$sample, srt_df$group)
 
   barplot_cluster_abundance(df, ...)
