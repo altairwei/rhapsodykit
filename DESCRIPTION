@@ -1,6 +1,6 @@
 Package: rhapsodykit
 Title: A Set of Tools for BD Rhapsody WTA Downstream Analysis
-Version: 0.0.0.9018
+Version: 0.0.0.9019
 Authors@R: 
     person(given = "Altair",
            family = "Wei",
@@ -40,9 +40,11 @@ Imports:
     ggnewscale,
     UpSetR,
     ggupset,
-    SeuratDisk (>= 0.0.0.9019)
-Remotes: 
-    github::altairwei/seurat-disk@fetch-data
+    SeuratDisk (>= 0.0.0.9019),
+    DAseq (>= 1.0.0)
+Remotes:  
+    github::altairwei/seurat-disk@fetch-data,
+    github::altairwei/DAseq@fix-large-sparse-matrices
 Suggests: 
     testthat
 biocViews: SingleCellWorkflow
