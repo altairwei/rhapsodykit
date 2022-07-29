@@ -80,7 +80,7 @@ findDiffAbundantCells <- function(
 #' Combine differential abundant subpopulation
 #' TODO: 如何处理相同的细胞呢？去除重复，但用 list 记录该细胞来源条件。
 #' @inherit Seurat::FindClusters
-findCommonDACluster <- function(obj_list, resolution) {
+findDACombinedClusters <- function(obj_list, resolution) {
 
 }
 
@@ -312,4 +312,27 @@ plotDARandomPermutation <- function(obj, size = 0.5) {
     ggplot2::ylab("DA measure")
 
   X.rand.plot
+}
+
+#' Calculate DA Score
+#'
+#' @param cell.labels Sample label for all cells.
+#' @param cell.idx Location of cells belong to a given identity.
+#' @param labels.1 label name(s) that represent condition 1
+#' @param labels.2 label name(s) that represent condition 2
+#' @export
+onlyDAscore <- function(cell.labels, cell.idx, labels.1, labels.2){
+  # Remove invalid conditions
+  labels.1 <- labels.1[labels.1 %in% cell.labels]
+  labels.2 <- labels.2[labels.2 %in% cell.labels]
+
+  # Get cell labels belong to one identity
+  idx.label <- cell.labels[cell.idx]
+
+  # This is same way to calculate DA.score as DA subpopulation
+  ratio.1 <- sum(idx.label %in% labels.1) / sum(cell.labels %in% labels.1)
+  ratio.2 <- sum(idx.label %in% labels.2) / sum(cell.labels %in% labels.2)
+  ratio.diff <- (ratio.2 - ratio.1) / (ratio.2 + ratio.1)
+
+  return(ratio.diff)
 }
