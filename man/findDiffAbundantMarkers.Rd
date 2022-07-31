@@ -18,7 +18,7 @@ findDiffAbundantMarkers(
 \item{da}{DAseq results}
 
 \item{method}{Which method should be used to find markers.
-Method \code{COSG} is based on \code{\link[COSG](cosg)}, \code{Seruat} is
+Method \code{COSG} is based on \code{\link[COSG]{cosg}}, \code{Seruat} is
 based on \code{\link[DAseq]{SeuratMarkerFinder}} and \code{STG} is baed
 on \code{\link[DAseq]{STGmarkerFinder}} which requires python environment.}
 
