@@ -87,18 +87,85 @@ findDACombinedClusters <- function(obj_list, resolution) {
 #' Find markers for differential abundant subpopulation
 #'
 #' @param obj Seurat object
+#' @param da DAseq results
 #' @param method Which method should be used to find markers.
 #' Method \code{COSG} is based on \code{\link[COSG](cosg)}, \code{Seruat} is
 #' based on \code{\link[DAseq]{SeuratMarkerFinder}} and \code{STG} is baed
 #' on \code{\link[DAseq]{STGmarkerFinder}} which requires python environment.
+#' @param GPU Which GPU to use (GPU IDs), default using CPU. Note: this value
+#' will be used to set CUDA_VISIBLE_DEVICES environment.
 #' @param ... Additional arguments passed to marker finder.
 #' @export
 findDiffAbundantMarkers <- function(
-  obj,
+  obj, da,
   method = c("COSG", "Seurat", "STG"),
+  GPU = "",
   ...
 ) {
+  method <- match.arg(method)
+  switch(method,
+    COSG = {
+      obj <- DAseq::addDAslot(obj,
+        da.regions = da$regions,
+        da.slot = "da", set.ident = TRUE)
+      n.da <- length(unique(object$da)) - 1
+      da.regions.to.run <- c(1:n.da)
+      markers <- COSG::cosg(
+        obj, groups = as.character(da.regions.to.run),
+        assay = "RNA", slot = "data",
+        ...
+      )
+      as.list(markers$names)
+    },
+    Seurat = {
+      obj <- DAseq::addDAslot(obj, da.regions = da$regions, da.slot = "da")
+      markers <- DAseq::SeuratMarkerFinder(
+        obj, da.slot = "da", assay = "RNA", ...
+      )
+      lapply(markers, function(df) {
+        df <- dplyr::arrange(df, dplyr::desc(avg_log2FC), p_val)
+        rownames(df)
+      })
+    },
+    STG = {
+      markers <- DAseq::STGmarkerFinder(
+        X = SeuratObject::GetAssayData(
+          obj, slot = "data", assay = "RNA"),
+        da.regions = da$regions,
+        return.model = TRUE,
+        GPU = GPU,
+        python.use = Sys.which("python"),
+        ...
+      )
+      lapply(markers$da.markers, function(df) {
+        dplyr::arrange(df, dplyr::desc(avg_logFC), p_value) %>%
+        dplyr::pull("gene")
+      })
+    }
+  )
+}
 
+#' Calculate DA Score
+#'
+#' @param cell.labels Sample label for all cells.
+#' @param cell.idx Location of cells belong to a given identity.
+#' @param labels.1 label name(s) that represent condition 1
+#' @param labels.2 label name(s) that represent condition 2
+#' @export
+onlyDAscore <- function(cell.labels, cell.idx, labels.1, labels.2){
+  # Remove invalid conditions
+  labels.1 <- labels.1[labels.1 %in% cell.labels]
+  labels.2 <- labels.2[labels.2 %in% cell.labels]
+
+  # Get cell labels belong to one identity
+  idx.label <- cell.labels[cell.idx]
+
+  # This is same way to calculate DA.score as DA subpopulation
+  ratio.1 <- sum(idx.label %in% labels.1) / sum(cell.labels %in% labels.1)
+  ratio.2 <- sum(idx.label %in% labels.2) / sum(cell.labels %in% labels.2)
+  ratio.diff <- (ratio.2 - ratio.1) / (ratio.2 + ratio.1)
+
+  return(ratio.diff)
 }
 
 #' Plot DA Cell Scores
@@ -312,27 +379,4 @@ plotDARandomPermutation <- function(obj, size = 0.5) {
     ggplot2::ylab("DA measure")
 
   X.rand.plot
-}
-
-#' Calculate DA Score
-#'
-#' @param cell.labels Sample label for all cells.
-#' @param cell.idx Location of cells belong to a given identity.
-#' @param labels.1 label name(s) that represent condition 1
-#' @param labels.2 label name(s) that represent condition 2
-#' @export
-onlyDAscore <- function(cell.labels, cell.idx, labels.1, labels.2){
-  # Remove invalid conditions
-  labels.1 <- labels.1[labels.1 %in% cell.labels]
-  labels.2 <- labels.2[labels.2 %in% cell.labels]
-
-  # Get cell labels belong to one identity
-  idx.label <- cell.labels[cell.idx]
-
-  # This is same way to calculate DA.score as DA subpopulation
-  ratio.1 <- sum(idx.label %in% labels.1) / sum(cell.labels %in% labels.1)
-  ratio.2 <- sum(idx.label %in% labels.2) / sum(cell.labels %in% labels.2)
-  ratio.diff <- (ratio.2 - ratio.1) / (ratio.2 + ratio.1)
-
-  return(ratio.diff)
 }

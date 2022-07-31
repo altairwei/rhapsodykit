@@ -4,15 +4,26 @@
 \alias{findDiffAbundantMarkers}
 \title{Find markers for differential abundant subpopulation}
 \usage{
-findDiffAbundantMarkers(obj, method = c("COSG", "Seurat", "STG"), ...)
+findDiffAbundantMarkers(
+  obj,
+  da,
+  method = c("COSG", "Seurat", "STG"),
+  GPU = "",
+  ...
+)
 }
 \arguments{
 \item{obj}{Seurat object}
+
+\item{da}{DAseq results}
 
 \item{method}{Which method should be used to find markers.
 Method \code{COSG} is based on \code{\link[COSG](cosg)}, \code{Seruat} is
 based on \code{\link[DAseq]{SeuratMarkerFinder}} and \code{STG} is baed
 on \code{\link[DAseq]{STGmarkerFinder}} which requires python environment.}
+
+\item{GPU}{Which GPU to use (GPU IDs), default using CPU. Note: this value
+will be used to set CUDA_VISIBLE_DEVICES environment.}
 
 \item{...}{Additional arguments passed to marker finder.}
 }
