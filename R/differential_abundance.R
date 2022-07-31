@@ -108,10 +108,11 @@ findDiffAbundantMarkers <- function(
       obj <- DAseq::addDAslot(obj,
         da.regions = da$regions,
         da.slot = "da", set.ident = TRUE)
-      n.da <- length(unique(object$da)) - 1
+      n.da <- length(unique(obj$da)) - 1
       da.regions.to.run <- c(1:n.da)
+      obj <- subset(x = obj, idents = as.character(da.regions.to.run))
       markers <- COSG::cosg(
-        obj, groups = as.character(da.regions.to.run),
+        obj, groups = "all",
         assay = "RNA", slot = "data",
         ...
       )
