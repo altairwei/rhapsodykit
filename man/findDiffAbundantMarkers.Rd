@@ -8,6 +8,8 @@ findDiffAbundantMarkers(
   obj,
   da,
   method = c("COSG", "Seurat", "STG"),
+  top_n = NULL,
+  return_raw = FALSE,
   GPU = "",
   ...
 )
@@ -21,6 +23,12 @@ findDiffAbundantMarkers(
 Method \code{COSG} is based on \code{\link[COSG]{cosg}}, \code{Seruat} is
 based on \code{\link[DAseq]{SeuratMarkerFinder}} and \code{STG} is baed
 on \code{\link[DAseq]{STGmarkerFinder}} which requires python environment.}
+
+\item{top_n}{Return the top N markers from results. The order of markers
+is determined by scores for \code{COSG} and by average log2FC then P value
+for \code{Seurat} or \code{STG}.}
+
+\item{return_raw}{Return raw results produced by specified \code{method}.}
 
 \item{GPU}{Which GPU to use (GPU IDs), default using CPU. Note: this value
 will be used to set CUDA_VISIBLE_DEVICES environment.}

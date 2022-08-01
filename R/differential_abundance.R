@@ -92,6 +92,10 @@ findDACombinedClusters <- function(obj_list, resolution) {
 #' Method \code{COSG} is based on \code{\link[COSG]{cosg}}, \code{Seruat} is
 #' based on \code{\link[DAseq]{SeuratMarkerFinder}} and \code{STG} is baed
 #' on \code{\link[DAseq]{STGmarkerFinder}} which requires python environment.
+#' @param top_n Return the top N markers from results. The order of markers
+#' is determined by scores for \code{COSG} and by average log2FC then P value
+#' for \code{Seurat} or \code{STG}.
+#' @param return_raw Return raw results produced by specified \code{method}.
 #' @param GPU Which GPU to use (GPU IDs), default using CPU. Note: this value
 #' will be used to set CUDA_VISIBLE_DEVICES environment.
 #' @param ... Additional arguments passed to marker finder.
@@ -99,11 +103,13 @@ findDACombinedClusters <- function(obj_list, resolution) {
 findDiffAbundantMarkers <- function(
   obj, da,
   method = c("COSG", "Seurat", "STG"),
+  top_n = NULL,
+  return_raw = FALSE,
   GPU = "",
   ...
 ) {
   method <- match.arg(method)
-  switch(method,
+  results <- switch(method,
     COSG = {
       obj <- DAseq::addDAslot(obj,
         da.regions = da$regions,
@@ -114,19 +120,28 @@ findDiffAbundantMarkers <- function(
       markers <- COSG::cosg(
         obj, groups = "all",
         assay = "RNA", slot = "data",
+        n_genes_user = top_n,
         ...
       )
-      as.list(markers$names)
+
+      if (return_raw)
+        markers
+      else
+        as.list(markers$names)
     },
     Seurat = {
       obj <- DAseq::addDAslot(obj, da.regions = da$regions, da.slot = "da")
       markers <- DAseq::SeuratMarkerFinder(
         obj, da.slot = "da", assay = "RNA", ...
       )
-      lapply(markers, function(df) {
-        df <- dplyr::arrange(df, dplyr::desc(avg_log2FC), p_val)
-        rownames(df)
-      })
+
+      if (return_raw)
+        markers
+      else
+        lapply(markers, function(df) {
+          df <- dplyr::arrange(df, dplyr::desc(avg_log2FC), p_val)
+          rownames(df)
+        })
     },
     STG = {
       markers <- DAseq::STGmarkerFinder(
@@ -138,12 +153,22 @@ findDiffAbundantMarkers <- function(
         python.use = Sys.which("python"),
         ...
       )
-      lapply(markers$da.markers, function(df) {
-        dplyr::arrange(df, dplyr::desc(avg_logFC), p_value) %>%
-        dplyr::pull("gene")
-      })
+
+      if (return_raw)
+        markers
+      else
+        lapply(markers$da.markers, function(df) {
+          dplyr::arrange(df, dplyr::desc(avg_logFC), p_value) %>%
+          dplyr::pull("gene")
+        })
     }
   )
+
+  if (!return_raw && !is.null(top_n)) {
+    lapply(results, function(x) x[seq_len(top_n)])
+  } else {
+    results
+  }
 }
 
 #' Calculate DA Score
