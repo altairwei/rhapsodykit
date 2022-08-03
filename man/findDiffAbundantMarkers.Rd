@@ -26,14 +26,17 @@ on \code{\link[DAseq]{STGmarkerFinder}} which requires python environment.}
 
 \item{top_n}{Return the top N markers from results. The order of markers
 is determined by scores for \code{COSG} and by average log2FC then P value
-for \code{Seurat} or \code{STG}.}
+for \code{Seurat} and \code{STG}.}
 
 \item{return_raw}{Return raw results produced by specified \code{method}.}
 
 \item{GPU}{Which GPU to use (GPU IDs), default using CPU. Note: this value
-will be used to set CUDA_VISIBLE_DEVICES environment.}
+will be used to set \code{CUDA_VISIBLE_DEVICES} environment.}
 
 \item{...}{Additional arguments passed to marker finder.}
+}
+\value{
+A list of marker genes
 }
 \description{
 Find markers for differential abundant subpopulation

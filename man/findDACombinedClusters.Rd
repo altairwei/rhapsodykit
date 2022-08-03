@@ -2,30 +2,35 @@
 % Please edit documentation in R/differential_abundance.R
 \name{findDACombinedClusters}
 \alias{findDACombinedClusters}
-\title{Combine differential abundant subpopulation
-TODO: 如何处理相同的细胞呢？去除重复，但用 list 记录该细胞来源条件。}
+\title{Combine differential abundant subpopulation}
 \usage{
-findDACombinedClusters(obj_list, resolution)
+findDACombinedClusters(
+  obj_list,
+  ref_label,
+  resolution = 0.05,
+  prune.SNN = 1/15,
+  group.singletons = FALSE,
+  min.cell = NULL,
+  ...
+)
 }
 \arguments{
-\item{resolution}{Value of the resolution parameter, use a value above
-(below) 1.0 if you want to obtain a larger (smaller) number of communities.}
-}
-\value{
-Returns a Seurat object where the idents have been updated with new cluster info;
-latest clustering results will be stored in object metadata under 'seurat_clusters'.
-Note that 'seurat_clusters' will be overwritten everytime FindClusters is run
+\item{obj_list}{A list of DAseq results}
+
+\item{ref_label}{The control condition common to all DAseq results}
+
+\item{resolution}{parameter for Seurat function FindClusters(), default 0.05}
+
+\item{prune.SNN}{parameter for Seurat function FindNeighbors(), default 1/15}
+
+\item{group.singletons}{parameter for Seurat function FindClusters(), default True}
+
+\item{min.cell}{integer, number of cells below which a DA region will be removed as outliers, default NULL, use minimum k value in k-vector}
+
+\item{...}{other parameters to pass to Seurat FindClusters()}
 }
 \description{
-Identify clusters of cells by a shared nearest neighbor (SNN) modularity
-optimization based clustering algorithm. First calculate k-nearest neighbors
-and construct the SNN graph. Then optimize the modularity function to
-determine clusters. For a full description of the algorithms, see Waltman and
-van Eck (2013) \emph{The European Physical Journal B}. Thanks to Nigel
-Delaney (evolvedmicrobe@github) for the rewrite of the Java modularity
-optimizer code in Rcpp!
-}
-\details{
-To run Leiden algorithm, you must first install the leidenalg python
-package (e.g. via pip install leidenalg), see Traag et al (2018).
+This function assumes that each DAseq result is produced
+from a different subset of the same integrated cell embedding
+and has a common reference condition (aka. control).
 }

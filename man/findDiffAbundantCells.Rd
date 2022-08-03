@@ -11,7 +11,7 @@ findDiffAbundantCells(
   reduction = "pca",
   npc = 20,
   pred.thres = NULL,
-  k.vector = seq(50, 500, 50),
+  k.vector = NULL,
   resolution = 0.05
 )
 }

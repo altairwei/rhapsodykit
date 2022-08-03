@@ -16,18 +16,18 @@
 findDiffAbundantCells <- function(
   obj, ctrl, stim, reduction = "pca",
   npc = 20, pred.thres = NULL,
-  k.vector = seq(50, 500, 50),
+  k.vector = NULL,
   resolution = 0.05
 ) {
   # DAseq only allow pairwise comparison, so we subset Seurat object.
   obj <- subset(obj, subset = group %in% c(ctrl, stim))
   info <- Seurat::FetchData(obj, vars = c("sample", "group", "ident"))
 
-  # Extract sample label for each group.
+  # Extract sample label for each group. Aka. replicates
   sample_ctrl <- unique(info[
-    info$group %in% ctrl, "sample"])
+    info$group == ctrl, "sample"])
   sample_stim <- unique(info[
-    info$group %in% stim, "sample"])
+    info$group == stim, "sample"])
 
   # Input data
   emb_pca <- Seurat::Embeddings(obj[[reduction]])[, 1:npc]
@@ -35,6 +35,7 @@ findDiffAbundantCells <- function(
   # Sample label for every cell
   cell_labels <- obj$sample
 
+  # k.vector here means different nearest-neighborhood scales
   da_cells <- DAseq::getDAcells(
     X = emb_pca,
     cell.labels = cell_labels,
@@ -78,10 +79,167 @@ findDiffAbundantCells <- function(
 }
 
 #' Combine differential abundant subpopulation
-#' TODO: 如何处理相同的细胞呢？去除重复，但用 list 记录该细胞来源条件。
-#' @inherit Seurat::FindClusters
-findDACombinedClusters <- function(obj_list, resolution) {
+#'
+#' This function assumes that each DAseq result is produced
+#' from a different subset of the same integrated cell embedding
+#' and has a common reference condition (aka. control).
+#'
+#' @inheritParams DAseq::getDAregion
+#' @param obj_list A list of DAseq results
+#' @param ref_label The control condition common to all DAseq results
+#' @export
+findDACombinedClusters <- function(
+  obj_list, ref_label,
+  resolution = 0.05, prune.SNN = 1 / 15,
+  group.singletons = FALSE,
+  min.cell = NULL,
+  ...) {
 
+  stopifnot(length(obj_list) > 1)
+  if (!all(sapply(obj_list, function(x) x$args$condition.1) == ref_label))
+    stop("All DAseq results must have the same reference label: ", ref_label)
+
+  if (is.null(min.cell)) {
+    min.cell <- as.integer(colnames(obj_list[[1]]$cells$da.ratio)[1])
+    cat("Using min.cell = ", min.cell, "\n", sep = "")
+  }
+
+  # Combine cell embedings
+  # The order of cell.labels is equal to the order of cell embeding
+  embed_ref <- obj_list[[1]]$embeddings$pca[
+    with(obj_list[[1]]$args, cell.labels %in% labels.1), ]
+  embed_stim_list <- lapply(obj_list, function(obj) {
+    obj$embeddings$pca[
+      with(obj$args, cell.labels %in% labels.2), ]
+  })
+
+  embed <- rbind(embed_ref, do.call(rbind, embed_stim_list))
+  if (nrow(embed) != length(unique(rownames(embed))))
+    stop("Duplicated cell names.")
+
+  # Generate meta data
+  df_list <- lapply(obj_list, function(obj) {
+    with(obj, {
+      df <- data.frame(
+        cell.names = rownames(embeddings$pca),
+        sample = args$cell.labels,
+        da.up = FALSE,
+        da.down = FALSE
+      )
+
+      # The value of da.up or da.down is the index of cell.labels
+      df$da.up[cells$da.up] <- TRUE
+      df$da.down[cells$da.down] <- TRUE
+
+      df
+    })
+  })
+
+  meta.data <- dplyr::bind_rows(df_list) %>%
+    dplyr::group_by(cell.names) %>%
+    dplyr::summarise(
+      cell.names = unique(cell.names),
+      sample = unique(sample),
+      da.up = any(da.up),
+      da.down = any(da.down)
+    )
+
+  meta.data <- tibble::column_to_rownames(meta.data, var = "cell.names")
+  meta.data <- meta.data[rownames(embed), ]
+
+  n.cells <- nrow(embed)
+  n.dims <- ncol(embed)
+  X.S <- SeuratObject::CreateSeuratObject(
+    counts = t(embed), meta.data = meta.data)
+  # We assign it to 'pca' even though it may not be, it doesn't matter.
+  X.S[["pca"]] <- Seurat::CreateDimReducObject(
+    embeddings = embed, stdev = apply(embed, MARGIN = 2, FUN = sd),
+    key = "PC_", assay = SeuratObject::DefaultAssay(X.S))
+  X.S <- Seurat::FindNeighbors(
+    X.S, reduction = "pca", dims = 1:n.dims,
+    prune.SNN = prune.SNN, verbose = FALSE)
+
+  if (sum(X.S$da.up) > 1) {
+    up.S <- subset(X.S, subset = da.up == TRUE)
+    up.S <- Seurat::FindNeighbors(
+      up.S, reduction = "pca", dims = 1:n.dims, verbose = FALSE)
+    up.S <- Seurat::FindClusters(
+      up.S, resolution = resolution,
+      group.singletons = group.singletons,
+      verbose = FALSE, ...)
+    up.clusters <- as.numeric(up.S@active.ident)
+    up.clusters[up.S@active.ident == "singleton"] <- 0
+  } else {
+    up.clusters <- NULL
+  }
+
+  n.up.clusters <- length(unique(up.clusters)) - as.numeric(0 %in% up.clusters)
+
+  if (sum(X.S$da.down) > 1) {
+    down.S <- subset(X.S, subset = da.down == TRUE)
+    down.S <- Seurat::FindNeighbors(
+      down.S, reduction = "pca", dims = 1:n.dims, verbose = FALSE)
+    down.S <- Seurat::FindClusters(
+      down.S, resolution = resolution,
+      group.singletons = group.singletons,
+      verbose = FALSE, ...
+    )
+    down.clusters <- as.numeric(down.S@active.ident) + n.up.clusters
+    down.clusters[down.S@active.ident == "singleton"] <- 0
+  } else {
+    down.clusters <- NULL
+  }
+
+  X.S$da.region.label <- 0
+  X.S$da.region.label[X.S$da.up == TRUE] <- up.clusters
+  X.S$da.region.label[X.S$da.down == TRUE] <- down.clusters
+
+  # remove small clusters with cells < min.cell
+  da.region.label.tab <- table(X.S$da.region.label)
+  if (min(da.region.label.tab) < min.cell){
+    da.region.to.remove <- as.numeric(names(da.region.label.tab)[
+      which(da.region.label.tab < min.cell)])
+    cat("Removing ", length(da.region.to.remove),
+        " DA regions with cells < ", min.cell, ".\n", sep = "")
+    da.region.label.old <- X.S$da.region.label
+    for (ii in da.region.to.remove) {
+      X.S$da.region.label[da.region.label.old == ii] <- 0
+      X.S$da.region.label[da.region.label.old > ii] <- X.S$da.region.label[
+        da.region.label.old > ii] - 1
+    }
+  }
+
+  lapply(obj_list, function(obj) {
+    da_regions <- with(obj, {
+      cell.names <- rownames(embeddings$pca)[cells$cell.idx]
+      da.region.label <- X.S@meta.data[cell.names, "da.region.label"]
+
+      X.n.da <- length(unique(da.region.label)) - 1
+      X.da.stat <- matrix(0, nrow = X.n.da, ncol = 3)
+      colnames(X.da.stat) <- c("DA.score", "pval.wilcoxon", "pval.ttest")
+      if (X.n.da > 0) {
+        for (ii in 1:X.n.da) {
+          X.da.stat[ii, ] <- DAseq:::getDAscore(
+            cell.labels = args$cell.labels,
+            cell.idx = which(da.region.label == ii),
+            labels.1 = args$labels.1, labels.2 = args$labels.2
+          )
+        }
+      } else {
+        warning("No DA regions found.")
+      }
+
+      list(
+        cell.idx = cells$cell.idx,
+        da.region.label = da.region.label,
+        DA.stat = X.da.stat,
+        da.region.plot = NULL
+      )
+    })
+
+    obj$regions <- da_regions
+    obj
+  })
 }
 
 #' Find markers for differential abundant subpopulation
@@ -94,11 +252,12 @@ findDACombinedClusters <- function(obj_list, resolution) {
 #' on \code{\link[DAseq]{STGmarkerFinder}} which requires python environment.
 #' @param top_n Return the top N markers from results. The order of markers
 #' is determined by scores for \code{COSG} and by average log2FC then P value
-#' for \code{Seurat} or \code{STG}.
+#' for \code{Seurat} and \code{STG}.
 #' @param return_raw Return raw results produced by specified \code{method}.
 #' @param GPU Which GPU to use (GPU IDs), default using CPU. Note: this value
-#' will be used to set CUDA_VISIBLE_DEVICES environment.
+#' will be used to set \code{CUDA_VISIBLE_DEVICES} environment.
 #' @param ... Additional arguments passed to marker finder.
+#' @return A list of marker genes
 #' @export
 findDiffAbundantMarkers <- function(
   obj, da,
