@@ -480,18 +480,20 @@ plotDASite <- function(obj, reduction) {
 #' DA subpopulation clustering result is shown in the 2D embedding
 #'
 #' @inheritParams plotDACellScore
+#' @param color_fun Color function to plot clusters.
+#' Such as \code{\link[Seurat]{DiscretePalette}}
 #' @export
-plotDACellLabel <- function(obj, reduction) {
+plotDACellLabel <- function(obj, reduction, color_fun = scales::hue_pal()) {
   embedding <- obj$embeddings[[reduction]][obj$cells$cell.idx, ]
   X.da.label <- obj$regions$da.region.label
   X.da.order <- order(X.da.label, decreasing = FALSE)
   X.n.da <- length(unique(X.da.label)) - 1
   DAseq::plotCellLabel(
-    X = embedding[X.da.order,],
+    X = embedding[X.da.order, ],
     label = as.factor(X.da.label[X.da.order])
   ) +
     ggplot2::scale_color_manual(
-      values = c("gray", scales::hue_pal()(X.n.da))
+      values = c("gray", color_fun(X.n.da))
     )
 }
 

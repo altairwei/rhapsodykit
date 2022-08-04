@@ -4,10 +4,13 @@
 \alias{plotDACellLabel}
 \title{DA subpopulation clustering result is shown in the 2D embedding}
 \usage{
-plotDACellLabel(obj, reduction)
+plotDACellLabel(obj, reduction, color_fun = scales::hue_pal())
 }
 \arguments{
 \item{obj}{DAseq results}
+
+\item{color_fun}{Color function to plot clusters.
+Such as \code{\link[Seurat]{DiscretePalette}}}
 }
 \description{
 DA subpopulation clustering result is shown in the 2D embedding
