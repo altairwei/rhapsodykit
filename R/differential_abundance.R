@@ -99,11 +99,6 @@ findDACombinedClusters <- function(
   if (!all(sapply(obj_list, function(x) x$args$condition.1) == ref_label))
     stop("All DAseq results must have the same reference label: ", ref_label)
 
-  if (is.null(min.cell)) {
-    min.cell <- as.integer(colnames(obj_list[[1]]$cells$da.ratio)[1])
-    cat("Using min.cell = ", min.cell, "\n", sep = "")
-  }
-
   # Combine cell embedings
   # The order of cell.labels is equal to the order of cell embeding
   embed_ref <- obj_list[[1]]$embeddings$pca[
@@ -194,21 +189,6 @@ findDACombinedClusters <- function(
   X.S$da.region.label[X.S$da.up == TRUE] <- up.clusters
   X.S$da.region.label[X.S$da.down == TRUE] <- down.clusters
 
-  # remove small clusters with cells < min.cell
-  da.region.label.tab <- table(X.S$da.region.label)
-  if (min(da.region.label.tab) < min.cell){
-    da.region.to.remove <- as.numeric(names(da.region.label.tab)[
-      which(da.region.label.tab < min.cell)])
-    cat("Removing ", length(da.region.to.remove),
-        " DA regions with cells < ", min.cell, ".\n", sep = "")
-    da.region.label.old <- X.S$da.region.label
-    for (ii in da.region.to.remove) {
-      X.S$da.region.label[da.region.label.old == ii] <- 0
-      X.S$da.region.label[da.region.label.old > ii] <- X.S$da.region.label[
-        da.region.label.old > ii] - 1
-    }
-  }
-
   lapply(obj_list, function(obj) {
     da_regions <- with(obj, {
       cell.names <- rownames(embeddings$pca)[cells$cell.idx]
@@ -218,6 +198,27 @@ findDACombinedClusters <- function(
       significant[cells$da.up] <- TRUE
       significant[cells$da.down] <- TRUE
       da.region.label[!significant] <- 0
+
+      # remove small clusters with cells < min.cell
+      if (is.null(min.cell)) {
+        min.cell <- as.integer(colnames(cells$da.ratio)[1])
+        cat("Using min.cell = ", min.cell, "\n", sep = "")
+      }
+
+      da.region.label.tab <- table(da.region.label)
+      if (min(da.region.label.tab) < min.cell) {
+        da.region.to.remove <- as.numeric(names(da.region.label.tab)[
+          which(da.region.label.tab < min.cell)])
+        cat("Removing ", length(da.region.to.remove),
+            " DA regions with cells < ", min.cell, ".\n", sep = "")
+        da.region.label.old <- da.region.label
+        for (ii in da.region.to.remove) {
+          da.region.label[da.region.label.old == ii] <- 0
+          # Do not change the name of DA cluster
+          #da.region.label[da.region.label.old > ii] <- da.region.label[
+          #  da.region.label.old > ii] - 1
+        }
+      }
 
       X.n.da <- length(unique(da.region.label)) - 1
       X.da.stat <- matrix(0, nrow = X.n.da, ncol = 3)
