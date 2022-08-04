@@ -214,6 +214,11 @@ findDACombinedClusters <- function(
       cell.names <- rownames(embeddings$pca)[cells$cell.idx]
       da.region.label <- X.S@meta.data[cell.names, "da.region.label"]
 
+      significant <- logical(length = seq_along(cell.names))
+      significant[cells$da.up] <- TRUE
+      significant[cells$da.down] <- TRUE
+      da.region.label[!significant] <- 0
+
       X.n.da <- length(unique(da.region.label)) - 1
       X.da.stat <- matrix(0, nrow = X.n.da, ncol = 3)
       colnames(X.da.stat) <- c("DA.score", "pval.wilcoxon", "pval.ttest")
