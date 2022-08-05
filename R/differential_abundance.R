@@ -155,7 +155,7 @@ findDACombinedClusters <- function(
     prune.SNN = prune.SNN, verbose = FALSE)
 
   if (sum(X.S$da.up) > 1) {
-    up.S <- subset(X.S, subset = da.up == TRUE)
+    up.S <- subset(X.S, subset = da.up == TRUE & da.down == FALSE)
     up.S <- Seurat::FindNeighbors(
       up.S, reduction = "pca", dims = 1:n.dims, verbose = FALSE)
     up.S <- Seurat::FindClusters(
@@ -171,7 +171,7 @@ findDACombinedClusters <- function(
   n.up.clusters <- length(unique(up.clusters)) - as.numeric(0 %in% up.clusters)
 
   if (sum(X.S$da.down) > 1) {
-    down.S <- subset(X.S, subset = da.down == TRUE)
+    down.S <- subset(X.S, subset = da.down == TRUE & da.up == FALSE)
     down.S <- Seurat::FindNeighbors(
       down.S, reduction = "pca", dims = 1:n.dims, verbose = FALSE)
     down.S <- Seurat::FindClusters(
@@ -186,8 +186,8 @@ findDACombinedClusters <- function(
   }
 
   X.S$da.region.label <- 0
-  X.S$da.region.label[X.S$da.up == TRUE] <- up.clusters
-  X.S$da.region.label[X.S$da.down == TRUE] <- down.clusters
+  X.S$da.region.label[X.S$da.up & !X.S$da.down] <- up.clusters
+  X.S$da.region.label[X.S$da.down & !X.S$da.up] <- down.clusters
 
   lapply(obj_list, function(obj) {
     da_regions <- with(obj, {
