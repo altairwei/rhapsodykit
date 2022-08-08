@@ -440,16 +440,16 @@ plotDACellScore <- function(
   p
 }
 
-#' Plot DA Sample Labels
+#' Plot DA Embedding
 #'
 #' @inheritParams plotDACellScore
 #' @export
-plotDASampleLabel <- function(obj, reduction) {
+plotDAEmbedding <- function(obj, reduction, group_by = "group") {
   embedding <- obj$embeddings[[reduction]]
   data_to_plot <- data.frame(
     Dim1 = embedding[, 1],
     Dim2 = embedding[, 2],
-    Group = obj$info$group
+    Group = obj$info[[group_by]]
   )
 
   p <- data_to_plot %>%
