@@ -193,6 +193,7 @@ findDACombinedClusters <- function(
     da_regions <- with(obj, {
       cell.names <- rownames(embeddings$pca)[cells$cell.idx]
       da.region.label <- X.S@meta.data[cell.names, "da.region.label"]
+      cell.labels <- X.S@meta.data[cell.names, "sample"]
 
       significant <- logical(length(cell.names))
       significant[cells$da.up] <- TRUE
@@ -220,13 +221,16 @@ findDACombinedClusters <- function(
         }
       }
 
-      X.n.da <- length(unique(da.region.label)) - 1
+      X.da <- unique(da.region.label)
+      X.da <- X.da[X.da != 0]
+      X.n.da <- length(X.da)
       X.da.stat <- matrix(0, nrow = X.n.da, ncol = 3)
       colnames(X.da.stat) <- c("DA.score", "pval.wilcoxon", "pval.ttest")
+      rownames(X.da.stat) <- X.da
       if (X.n.da > 0) {
-        for (ii in 1:X.n.da) {
-          X.da.stat[ii, ] <- DAseq:::getDAscore(
-            cell.labels = args$cell.labels,
+        for (ii in X.da) {
+          X.da.stat[as.character(ii), ] <- DAseq:::getDAscore(
+            cell.labels = cell.labels,
             cell.idx = which(da.region.label == ii),
             labels.1 = args$labels.1, labels.2 = args$labels.2
           )
