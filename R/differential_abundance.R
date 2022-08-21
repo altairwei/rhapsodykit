@@ -284,9 +284,8 @@ findDiffAbundantMarkers <- function(
       obj <- DAseq::addDAslot(obj,
         da.regions = da$regions,
         da.slot = "da", set.ident = TRUE)
-      SeuratObject::Idents(obj) <- "da"
-      n.da <- length(unique(obj$da)) - 1
-      da.regions.to.run <- c(1:n.da)
+      da <- unique(obj$da)
+      da.regions.to.run <- da[da != 0]
       obj <- subset(x = obj, idents = as.character(da.regions.to.run))
       markers <- COSG::cosg(
         obj, groups = "all",
@@ -302,6 +301,7 @@ findDiffAbundantMarkers <- function(
     },
     Seurat = {
       obj <- DAseq::addDAslot(obj, da.regions = da$regions, da.slot = "da")
+      # FIXME: Do not use length to calculate DA subpopulations
       markers <- DAseq::SeuratMarkerFinder(
         obj, da.slot = "da", assay = "RNA", ...
       )
@@ -315,6 +315,7 @@ findDiffAbundantMarkers <- function(
         })
     },
     STG = {
+      # FIXME: Do not use length to calculate DA subpopulations
       markers <- DAseq::STGmarkerFinder(
         X = SeuratObject::GetAssayData(
           obj, slot = "data", assay = "RNA"),
