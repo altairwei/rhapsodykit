@@ -229,6 +229,7 @@ findDACombinedClusters <- function(
       rownames(X.da.stat) <- X.da
       if (X.n.da > 0) {
         for (ii in X.da) {
+          browser()
           X.da.stat[as.character(ii), ] <- DAseq:::getDAscore(
             cell.labels = cell.labels,
             cell.idx = which(da.region.label == ii),
@@ -283,6 +284,7 @@ findDiffAbundantMarkers <- function(
       obj <- DAseq::addDAslot(obj,
         da.regions = da$regions,
         da.slot = "da", set.ident = TRUE)
+      SeuratObject::Idents(obj) <- "da"
       n.da <- length(unique(obj$da)) - 1
       da.regions.to.run <- c(1:n.da)
       obj <- subset(x = obj, idents = as.character(da.regions.to.run))
