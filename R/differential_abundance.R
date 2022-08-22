@@ -229,7 +229,6 @@ findDACombinedClusters <- function(
       rownames(X.da.stat) <- X.da
       if (X.n.da > 0) {
         for (ii in X.da) {
-          browser()
           X.da.stat[as.character(ii), ] <- DAseq:::getDAscore(
             cell.labels = cell.labels,
             cell.idx = which(da.region.label == ii),
