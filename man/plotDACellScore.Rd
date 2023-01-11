@@ -7,26 +7,33 @@
 plotDACellScore(
   obj,
   reduction,
-  show_clusters = NULL,
+  order = FALSE,
   label = FALSE,
-  label_box = FALSE,
-  label_cols = NULL,
-  label_legend = TRUE,
-  circle = FALSE
+  circle = FALSE,
+  point_size = 1,
+  point_alpha = 1,
+  text_size = 4,
+  theme_size = 10
 )
 }
 \arguments{
 \item{obj}{DAseq results}
 
-\item{show_clusters}{Display cell clusters}
+\item{reduction}{Cell embeddings to plot}
+
+\item{order}{Order cells by DA score}
 
 \item{label}{Label cell custers}
 
-\item{label_box}{Show label in box}
+\item{circle}{Draw circle around clusters}
 
-\item{label_cols}{Label colors}
+\item{point_size}{Set point size}
 
-\item{label_legend}{Show label legend}
+\item{point_alpha}{Set point alpha}
+
+\item{text_size}{Set text size}
+
+\item{theme_size}{Set theme size}
 }
 \value{
 ggplot object

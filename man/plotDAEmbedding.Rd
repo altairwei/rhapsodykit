@@ -8,6 +8,8 @@ plotDAEmbedding(obj, reduction, group_by = "group")
 }
 \arguments{
 \item{obj}{DAseq results}
+
+\item{reduction}{Cell embeddings to plot}
 }
 \description{
 Plot DA Embedding

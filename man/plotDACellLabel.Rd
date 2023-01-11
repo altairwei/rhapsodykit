@@ -9,6 +9,8 @@ plotDACellLabel(obj, reduction, color_fun = scales::hue_pal())
 \arguments{
 \item{obj}{DAseq results}
 
+\item{reduction}{Cell embeddings to plot}
+
 \item{color_fun}{Color function to plot clusters.
 Such as \code{\link[Seurat]{DiscretePalette}}}
 }

@@ -8,6 +8,8 @@ plotDASite(obj, reduction)
 }
 \arguments{
 \item{obj}{DAseq results}
+
+\item{reduction}{Cell embeddings to plot}
 }
 \description{
 Selected DA cells are highlighted in the 2D embedding

@@ -370,24 +370,27 @@ onlyDAscore <- function(cell.labels, cell.idx, labels.1, labels.2){
 #' The prediction values are overlayed on the 2D embedding
 #'
 #' @param obj DAseq results
-#' @param show_clusters Display cell clusters
+#' @param reduction Cell embeddings to plot
+#' @param order Order cells by DA score
 #' @param label Label cell custers
-#' @param label_box Show label in box
-#' @param label_cols Label colors
-#' @param label_legend Show label legend
+#' @param circle Draw circle around clusters
+#' @param point_size Set point size
+#' @param point_alpha Set point alpha
+#' @param text_size Set text size
+#' @param theme_size Set theme size
 #' @return ggplot object
 #' @export
 plotDACellScore <- function(
   obj, reduction,
-  show_clusters = NULL,
+  order = FALSE,
   label = FALSE,
-  label_box = FALSE,
-  label_cols = NULL,
-  label_legend = TRUE,
-  circle = FALSE
+  circle = FALSE,
+  point_size = 1,
+  point_alpha = 1,
+  text_size = 4,
+  theme_size = 10
 ) {
-  # Prepare data
-  embedding <- obj$embeddings[[reduction]][obj$cells$cell.idx,]
+  embedding <- obj$embeddings[[reduction]][obj$cells$cell.idx, ]
   data_to_plot <- data.frame(
     Dim1 = embedding[, 1],
     Dim2 = embedding[, 2],
@@ -395,23 +398,16 @@ plotDACellScore <- function(
     score = obj$cells$da.pred
   )
 
-  if (!is.null(show_clusters)) {
-    data_to_plot <- dplyr::filter(data_to_plot, clusters %in% show_clusters)
-    if (!is.null(label_cols)) {
-      names(label_cols) <- levels(data_to_plot$clusters)
-      label_cols <- label_cols[show_clusters]
-    }
-  }
+  if (order)
+    data_to_plot <- dplyr::arrange(data_to_plot, score)
 
   p <- data_to_plot %>%
     ggplot2::ggplot() +
     ggplot2::geom_point(
       mapping = ggplot2::aes(x = Dim1, y = Dim2, col = score),
-      shape = 16, size = 0.5
-    ) +
+      size = point_size, alpha = point_alpha) +
     ggplot2::scale_color_gradientn(colours = c("blue", "white", "red")) +
-    #ggthemes::scale_color_gradient2_tableau(trans = "reverse") +
-    cowplot::theme_cowplot() +
+    cowplot::theme_cowplot(theme_size) &
     ggplot2::theme(legend.title = ggplot2::element_blank())
 
   if (label) {
@@ -420,21 +416,17 @@ plotDACellScore <- function(
       dplyr::summarise(x = median(Dim1), y = median(Dim2))
 
     p <- p +
-      ggnewscale::new_scale_color() +
-      ggrepel::geom_label_repel(
+      ggrepel::geom_text_repel(
         data = label_positions,
         mapping = ggplot2::aes(
           x = x, y = y,
-          label = clusters,
-          color = clusters
+          label = clusters
         ),
-        fill = ggplot2::alpha(c("white"), 0.8),
-        show.legend = label_legend
+        size = text_size,
+        show.legend = FALSE,
+        bg.color = "white",
+        fontface = "bold"
       )
-
-    if (!is.null(label_cols)) {
-      p <- p + ggplot2::scale_color_manual(values = label_cols)
-    }
   }
 
   if (circle) {
